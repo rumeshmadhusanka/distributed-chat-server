@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v2
@@ -22,5 +22,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: maven
-    - name: Build and Run with maven
-      run: timeout 60 bash build-and-run.sh
+    - name: Build
+      run: mvn clean install
+    - name: Run
+      run: timeout 60 java -jar target/ChatServer-1.0.0-jar-with-dependencies.jar conf
