@@ -12,6 +12,7 @@ public class Main {
 //        List<ServerConfig.ServerInfo> servers = ServerConfig.getConfig(args[0]);
 //        System.out.println(servers);
         ClientHandler clientHandler = new ClientHandler();
-        clientHandler.startServer();
+//        clientHandler.startServer();
+        System.out.println("Hello world!");
     }
 }
