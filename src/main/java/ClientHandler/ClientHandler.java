@@ -1,32 +1,30 @@
-package Server;
+package ClientHandler;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+
+import InboundRequest.ClientInboundRequest;
+import InboundRequest.InboundRequest;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-public class Server {
-
-    public static void main(String[] args) {
-        Server server = new Server();
-        server.startServer();
-    }
+public class ClientHandler {
 
     public void startServer() {
         try {
-            // Start server and wait for client to connect.
+            // Start client handler and wait for client to connect.
             ServerSocket serverSocket = new ServerSocket(9991);
             System.out.println("Waiting for a client to connect");
             Socket connectionSocket = serverSocket.accept();
             System.out.println("Connection Established");
 
             //Create Input for the connection
-            InputStream inputToServer = connectionSocket.getInputStream();
-            Scanner scanner = new Scanner(inputToServer, String.valueOf(StandardCharsets.UTF_8));
+            InputStream inputFromClient = connectionSocket.getInputStream();
+            Scanner scanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
 
 //            OutputStream output = connectionSocket.getOutputStream();
 //            PrintWriter writer = new PrintWriter(output, true);
@@ -35,8 +33,9 @@ public class Server {
             while(connectionSocket.isConnected()) {
                 String line = scanner.nextLine();
                 JSONParser jsonParser = new JSONParser();
-                JSONObject request = (JSONObject) jsonParser.parse(line);
-                System.out.println(request.get("type"));
+                JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
+                InboundRequest request = new InboundRequest(jsonPayload);
+
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();

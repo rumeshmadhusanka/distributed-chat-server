@@ -1,2 +1,9 @@
-package InboundRequest;public class ServerInboundRequest {
+package InboundRequest;
+
+public class ServerInboundRequest {
+
+
+    public ServerInboundRequest(String payload) {
+
+    }
 }

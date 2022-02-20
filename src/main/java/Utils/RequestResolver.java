@@ -1,6 +1,5 @@
-package Framework;
+package Utils;
 
-import InboundRequest.ClientInboundRequest;
 import InboundRequest.InboundRequest;
 
 public class RequestResolver {
@@ -9,7 +8,7 @@ public class RequestResolver {
 
     }
 
-    public void resolve(InboundRequest inboundRequest){
+    public void resolveClientRequest(InboundRequest inboundRequest){
 
     }
 
