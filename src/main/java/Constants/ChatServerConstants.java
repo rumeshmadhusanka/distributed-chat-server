@@ -11,6 +11,7 @@ public class ChatServerConstants {
     }
 
     public class ClientConstants {
+        public static final String TYPE = "type";
         public static final String TYPE_CREATE_ID = "newidentity";
         public static final String TYPE_LIST = "list";
         public static final String TYPE_WHO = "who";
@@ -20,6 +21,14 @@ public class ChatServerConstants {
         public static final String TYPE_DELETE_ROOM = "deleteroom";
         public static final String TYPE_MESSAGE = "message";
         public static final String TYPE_QUIT = "quit";
+
+        public static final String APPROVED = "approved";
+        public static final String TRUE = "true";
+        public static final String FALSE = "false";
+
+        public static final String IDENTITY = "identity";
+        public static final String ROOM_ID = "roomid";
+
     }
 
 }
