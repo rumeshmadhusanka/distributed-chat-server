@@ -17,17 +17,17 @@ public class ServerHandler extends Thread {
 
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
-    private final ServerSocket serverCoordSocket;
+    private final ServerSocket serverCoordinationSocket;
 
-    public ServerHandler(ServerSocket serverCoordSocket) {
-        this.serverCoordSocket = serverCoordSocket;
+    public ServerHandler(ServerSocket serverCoordinationSocket) {
+        this.serverCoordinationSocket = serverCoordinationSocket;
     }
 
     @Override
     public void run(){
         try{
             while(true){
-                Socket serverSocket = serverCoordSocket.accept();
+                Socket serverSocket = serverCoordinationSocket.accept();
                 InputStream inputFromClient = serverSocket.getInputStream();
                 Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
                 String line = serverInputScanner.nextLine();
@@ -42,6 +42,12 @@ public class ServerHandler extends Thread {
     }
 
     private void resolveServerRequest(JSONObject jsonPayload){
+        String type = (String) jsonPayload.get("type");
+        JSONObject response;
 
+        switch (type){
+            case "TYPE_1":
+                System.out.println("TYPE 1");
+        }
     }
 }

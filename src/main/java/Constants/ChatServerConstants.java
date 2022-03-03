@@ -6,7 +6,7 @@ public class ChatServerConstants {
     }
 
     public class ServerConstants{
-        public static final String TYPE_CLIENT = "Client";
+        public static final String TYPE_NEW_IDENTITY = "Client";
         public static final String TYPE_SERVER = "Server";
     }
 
