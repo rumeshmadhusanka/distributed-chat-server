@@ -57,6 +57,7 @@ public class ClientHandler extends Thread{
 
         try {
             switch (type) {
+                //TODO: Move the logic from switch-case block to its own methods.
                 case ClientConstants.TYPE_CREATE_ID:
                     String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
                     //TODO: Implement new identity logic
