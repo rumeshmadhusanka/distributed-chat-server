@@ -39,7 +39,7 @@ public class ClientHandler extends Thread{
 
             while(!quitFlag) {
                 String line = scanner.nextLine();
-                System.out.println(line);
+                logger.debug("Received: "+ line);
                 JSONParser jsonParser = new JSONParser();
                 JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
                 resolveClientRequest(jsonPayload);
