@@ -1,21 +1,30 @@
 package Server;
 
 import ClientHandler.ClientHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerState {
+
+    private static final Logger logger = LogManager.getLogger(ServerState.class);
+
     private String serverId;
     private String serverAddress;
 
     private int coordinationPort;
     private int clientsPort;
 
+    private String serverConfFilePath;
+
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<Long, ClientHandler>();
-    private final ConcurrentHashMap<String, Room> roomHashMap = new ConcurrentHashMap<String, Room>();
+    private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<String, Room>();
+    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<String, Server>();
 
     private static ServerState serverState;
 
@@ -35,6 +44,7 @@ public class ServerState {
 
     public void initialize(String serverId, String serverConf) {
         this.serverId = serverId;
+        this.serverConfFilePath = serverConf;
         try{
             File conf = new File(serverConf);
             Scanner reader = new Scanner(conf);
@@ -70,17 +80,46 @@ public class ServerState {
         return coordinationPort;
     }
 
-    public void addClientHandlerThreadToMap(ClientHandler clientHandler) {
+    public void addClientHandler(ClientHandler clientHandler) {
         clientHandlerHashMap.put(clientHandler.getId(), clientHandler);
-    }
-
-    public void addRoomToMap(Room room) {
-        roomHashMap.put(room.getRoomId(), room);
     }
 
     public ConcurrentHashMap<Long, ClientHandler> getClientHandlerHashMap() {
         return clientHandlerHashMap;
     }
 
+    public void addServers() {
+        try{
+            File conf = new File(serverConfFilePath);
+            Scanner reader = new Scanner(conf);
+            while (reader.hasNextLine()){
+                String line = reader.nextLine();
+                String[] params = line.split("\t");
+                Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
+                serversHashmap.put(server.getId(), server);
+            }
 
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ConcurrentHashMap<String, Server> getServerHashmap() {
+        return serversHashmap;
+    }
+
+    public void addRoomToMap(Room room) {
+        roomsHashMap.put(room.getRoomId(), room);
+    }
+
+    public String getRoomByOwner(String owner) {
+        for (Map.Entry<String, Room> mapEntry: roomsHashMap.entrySet()) {
+            if(owner.equals(mapEntry.getValue().getOwner())){
+                return mapEntry.getValue().getRoomId();
+            }
+        }
+        return null;
+    }
+
+    public void removeRoom(Room room) {roomsHashMap.remove(room.getRoomId());}
 }
