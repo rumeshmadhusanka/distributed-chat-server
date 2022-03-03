@@ -15,6 +15,7 @@ public class ServerState {
     private int clientsPort;
 
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<Long, ClientHandler>();
+    private final ConcurrentHashMap<String, Room> roomHashMap = new ConcurrentHashMap<String, Room>();
 
     private static ServerState serverState;
 
@@ -71,6 +72,10 @@ public class ServerState {
 
     public void addClientHandlerThreadToMap(ClientHandler clientHandler) {
         clientHandlerHashMap.put(clientHandler.getId(), clientHandler);
+    }
+
+    public void addRoomToMap(Room room) {
+        roomHashMap.put(room.getRoomId(), room);
     }
 
     public ConcurrentHashMap<Long, ClientHandler> getClientHandlerHashMap() {
