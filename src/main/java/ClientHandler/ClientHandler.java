@@ -33,7 +33,6 @@ public class ClientHandler extends Thread{
         try {
             // Start client handler and wait for client to connect.
             logger.info("Client " + clientSocket.getInetAddress() + ":"+ clientSocket.getPort() + " connected.");
-            System.out.println("Client" + clientSocket.getInetAddress() + ":"+ clientSocket.getPort() + " connected.");
             //Create Input for the connection
             InputStream inputFromClient = clientSocket.getInputStream();
             Scanner scanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
@@ -47,8 +46,9 @@ public class ClientHandler extends Thread{
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
+        } finally {
+            logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":"+ clientSocket.getPort());
         }
-        System.out.println("Connection has ended");
     }
 
     public void resolveClientRequest(JSONObject jsonPayload) {
