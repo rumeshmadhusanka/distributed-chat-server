@@ -5,7 +5,10 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+import Consensus.Consensus;
 import Constants.ChatServerConstants.ClientConstants;
+import Server.Framework;
+import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -53,27 +56,23 @@ public class ClientHandler extends Thread{
 
     public void resolveClientRequest(JSONObject jsonPayload) {
         String type = (String) jsonPayload.get("type");
-        JSONObject response;
 
         try {
             switch (type) {
-                //TODO: Move the logic from switch-case block to its own methods.
+                //TODO: Move the logic from switch-case block to framework. Follow TYPE_CREATE_ID example.
                 case ClientConstants.TYPE_CREATE_ID:
                     String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                    //TODO: Implement new identity logic
-                    response = new JSONObject();
-                    response.put(ClientConstants.TYPE, type);
-                    response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+                    JSONObject response = Framework.createNewIdentity(identity);
                     Messaging.respondClient(response, this.clientSocket);
 
                 case ClientConstants.TYPE_CREATE_ROOM:
-                    String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-                    //TODO: Implement new room logic
-                    response = new JSONObject();
-                    response.put(ClientConstants.TYPE, type);
-                    response.put(ClientConstants.ROOM_ID, roomId);
-                    response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
-                    Messaging.respondClient(response, this.clientSocket);
+//                    String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
+//                    //TODO: Implement new room logic
+//                    response = new JSONObject();
+//                    response.put(ClientConstants.TYPE, type);
+//                    response.put(ClientConstants.ROOM_ID, roomId);
+//                    response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+//                    Messaging.respondClient(response, this.clientSocket);
 
                 case ClientConstants.TYPE_DELETE_ROOM:
 
@@ -92,7 +91,8 @@ public class ClientHandler extends Thread{
         }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
-
 }

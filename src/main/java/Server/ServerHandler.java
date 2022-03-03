@@ -1,11 +1,14 @@
 package Server;
 
 import ClientHandler.ClientHandler;
+import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -34,20 +37,27 @@ public class ServerHandler extends Thread {
                 logger.debug("Received: " +line);
                 JSONParser jsonParser = new JSONParser();
                 JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveServerRequest(jsonPayload);
+                resolveServerRequest(jsonPayload, serverSocket);
             }
         } catch (Exception e) {
 
         }
     }
 
-    private void resolveServerRequest(JSONObject jsonPayload){
+    private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
         String type = (String) jsonPayload.get("type");
         JSONObject response;
 
         switch (type){
-            case "TYPE_1":
-                System.out.println("TYPE 1");
+            case "Create new identity":
+                boolean isAvailable = Framework.verifyIdentity(String.valueOf(jsonPayload.get("identity")));
+            case "ASK":
+                logger.debug("Responding to ASK.");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("REPLY", "test-reply");
+                Messaging.respondClient(jsonObject, serverSocket);
+                // Receives a question.
+                // Respond.
         }
     }
 }

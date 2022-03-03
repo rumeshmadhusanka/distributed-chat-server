@@ -1,14 +1,21 @@
 package Server;
 
 import ClientHandler.ClientHandler;
+import Consensus.Consensus;
+import Consensus.Leader;
+import Constants.ChatServerConstants;
+import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ServerState {
 
@@ -25,6 +32,9 @@ public class ServerState {
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<Long, ClientHandler>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<String, Room>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<String, Server>();
+    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<String>();
+
+    private Leader currentLeader;
 
     private static ServerState serverState;
 
@@ -55,6 +65,10 @@ public class ServerState {
                     this.serverAddress = params[1];
                     this.clientsPort = Integer.parseInt(params[2]);
                     this.coordinationPort = Integer.parseInt(params[3]);
+                }
+                else {
+                    Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
+                    serversHashmap.put(server.getId(), server);
                 }
             }
 
@@ -88,21 +102,21 @@ public class ServerState {
         return clientHandlerHashMap;
     }
 
-    public void addServers() {
-        try{
-            File conf = new File(serverConfFilePath);
-            Scanner reader = new Scanner(conf);
-            while (reader.hasNextLine()){
-                String line = reader.nextLine();
-                String[] params = line.split("\t");
-                Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
-                serversHashmap.put(server.getId(), server);
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void addServers() {
+//        try{
+//            File conf = new File(serverConfFilePath);
+//            Scanner reader = new Scanner(conf);
+//            while (reader.hasNextLine()){
+//                String line = reader.nextLine();
+//                String[] params = line.split("\t");
+//                Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
+//                serversHashmap.put(server.getId(), server);
+//            }
+//
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public ConcurrentHashMap<String, Server> getServerHashmap() {
         return serversHashmap;
@@ -122,4 +136,20 @@ public class ServerState {
     }
 
     public void removeRoom(Room room) {roomsHashMap.remove(room.getRoomId());}
+
+    public Leader getCurrentLeader() {
+        return currentLeader;
+    }
+
+    public void setCurrentLeader(Leader currentLeader) {
+        this.currentLeader = currentLeader;
+    }
+
+    public void addIdentity(String identity){
+        this.identityList.add(identity);
+    }
+
+    public ConcurrentLinkedQueue<String> getIdentityList() {
+        return identityList;
+    }
 }

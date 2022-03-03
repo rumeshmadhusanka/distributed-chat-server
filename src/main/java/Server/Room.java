@@ -3,13 +3,16 @@ package Server;
 public class Room {
     private String roomId;
     private String owner;
+    private String serverId;
 
-    public Room(String roomId) {
+    public Room(String serverId, String roomId) {
+        this.serverId = serverId;
         this.roomId = roomId;
         this.owner = "";
     }
 
-    public Room(String roomId, String owner) {
+    public Room(String serverId, String roomId, String owner) {
+        this.serverId = serverId;
         this.roomId = roomId;
         this.owner = owner;
     }
@@ -19,4 +22,6 @@ public class Room {
     }
 
     public String getOwner() {return owner;}
+
+    public String getServerId() {return serverId;}
 }
