@@ -1,17 +1,13 @@
 package Server;
 
 import ClientHandler.ClientHandler;
-import Consensus.Consensus;
 import Consensus.Leader;
-import Constants.ChatServerConstants;
-import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,8 +114,8 @@ public class ServerState {
 //        }
 //    }
 
-    public ConcurrentHashMap<String, Server> getServerHashmap() {
-        return serversHashmap;
+    public Collection<Server> getServers() {
+        return serversHashmap.values();
     }
 
     public void addRoomToMap(Room room) {

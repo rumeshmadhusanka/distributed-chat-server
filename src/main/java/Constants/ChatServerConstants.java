@@ -5,9 +5,19 @@ public class ChatServerConstants {
 
     }
 
+
     public class ServerConstants{
+
         public static final String MAIN_HALL = "MainHall";
-        public static final String TYPE_SERVER = "Server";
+        public static final String TYPE = "type";
+        public static final String TYPE_CONSENSUS = "consensus";
+
+        public static final String KIND = "kind";
+        public static final String KIND_ASK_IDENTITY = "askIdentity";
+        public static final String KIND_ASK_ROOM = "askIdentity";
+
+        public static final String IDENTITY = "identity";
+        public static final String ROOM = "room";
     }
 
     public class ClientConstants {
