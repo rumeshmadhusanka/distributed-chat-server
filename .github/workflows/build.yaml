@@ -31,7 +31,7 @@ jobs:
       - name: Install test requirements
         run: pip install pexpect
       - name: Start servers
-        run: bash build-and-run.sh &> server-log.txt
+        run: bash build-and-run.sh > server-log.txt 2>&1 &
       - name: Test the server
         run: python test.py
       - name: Print the sever log
