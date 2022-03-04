@@ -1,6 +1,7 @@
 package Server;
 
 import ClientHandler.ClientHandler;
+import Constants.ChatServerConstants;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,7 +51,7 @@ public class ServerHandler extends Thread {
 
         switch (type){
             case "Create new identity":
-                boolean isAvailable = Framework.verifyIdentity(String.valueOf(jsonPayload.get("identity")));
+                boolean isAvailable = Framework.askServers(String.valueOf(jsonPayload.get("identity")), ChatServerConstants.ServerConstants.IDENTITY);
             case "ASK":
                 logger.debug("Responding to ASK.");
                 JSONObject jsonObject = new JSONObject();

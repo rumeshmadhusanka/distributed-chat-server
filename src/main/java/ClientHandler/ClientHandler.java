@@ -4,15 +4,11 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-
-import Consensus.Consensus;
 import Constants.ChatServerConstants.ClientConstants;
 import Server.Framework;
-import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import Messaging.Messaging;
@@ -43,9 +39,7 @@ public class ClientHandler extends Thread{
             while(!quitFlag) {
                 String line = scanner.nextLine();
                 logger.debug("Received: "+ line);
-                JSONParser jsonParser = new JSONParser();
-                JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveClientRequest(jsonPayload);
+                resolveClientRequest(Messaging.jsonParseRequest(line));
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
@@ -66,13 +60,7 @@ public class ClientHandler extends Thread{
                     Messaging.respondClient(response, this.clientSocket);
 
                 case ClientConstants.TYPE_CREATE_ROOM:
-//                    String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-//                    //TODO: Implement new room logic
-//                    response = new JSONObject();
-//                    response.put(ClientConstants.TYPE, type);
-//                    response.put(ClientConstants.ROOM_ID, roomId);
-//                    response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
-//                    Messaging.respondClient(response, this.clientSocket);
+                    //TODO: Implement new room logic
 
                 case ClientConstants.TYPE_DELETE_ROOM:
 
