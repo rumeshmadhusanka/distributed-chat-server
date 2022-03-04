@@ -27,7 +27,7 @@ def start_clients(n):
 
 
 try:
-    start_servers(num_servers)
+    # start_servers(num_servers)
     start_clients(num_clients)
     clients[0].sendline("Hello")
     clients[0].expect("Hello")
