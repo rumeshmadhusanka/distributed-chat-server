@@ -21,9 +21,6 @@ public class Main {
         logger.info("Server Id: " + args[0] + "Conf file path:" + args[1]);
         ServerState.getServerState().initialize(args[0], args[1]);
 
-        // Add Servers from Conf file.
-//        ServerState.getServerState().addServers();
-
         ServerState.getServerState().addRoomToMap(new Room(args[0],ServerConstants.MAIN_HALL+"-"+args[0]));
 
         // ServerSocket for coordination.
