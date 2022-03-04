@@ -23,12 +23,10 @@ public class ServerState {
     private int coordinationPort;
     private int clientsPort;
 
-    private String serverConfFilePath;
-
-    private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<Long, ClientHandler>();
-    private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<String, Room>();
-    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<String, Server>();
-    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<String>();
+    private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>();
+    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>();
 
     private Leader currentLeader;
 
@@ -50,7 +48,6 @@ public class ServerState {
 
     public void initialize(String serverId, String serverConf) {
         this.serverId = serverId;
-        this.serverConfFilePath = serverConf;
         try{
             File conf = new File(serverConf);
             Scanner reader = new Scanner(conf);
@@ -67,7 +64,7 @@ public class ServerState {
                     serversHashmap.put(server.getId(), server);
                 }
             }
-            //TODO remove hardcoded value
+            //TODO remove hardcoded Leader value
             this.currentLeader = new Leader("s1","localhost",5555);
 
         } catch (FileNotFoundException e) {
@@ -100,21 +97,6 @@ public class ServerState {
         return clientHandlerHashMap;
     }
 
-//    public void addServers() {
-//        try{
-//            File conf = new File(serverConfFilePath);
-//            Scanner reader = new Scanner(conf);
-//            while (reader.hasNextLine()){
-//                String line = reader.nextLine();
-//                String[] params = line.split("\t");
-//                Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
-//                serversHashmap.put(server.getId(), server);
-//            }
-//
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public Collection<Server> getServers() {
         return serversHashmap.values();
@@ -139,7 +121,7 @@ public class ServerState {
         return currentLeader;
     }
 
-    public void setCurrentLeader(Leader currentLeader) {
+    public synchronized void setCurrentLeader(Leader currentLeader) {
         this.currentLeader = currentLeader;
     }
 
