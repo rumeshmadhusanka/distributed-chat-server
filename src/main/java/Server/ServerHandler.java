@@ -1,7 +1,8 @@
 package Server;
 
 import ClientHandler.ClientHandler;
-import Constants.ChatServerConstants;
+import Consensus.Consensus;
+import Constants.ChatServerConstants.ServerConstants;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class ServerHandler extends Thread {
@@ -46,19 +48,31 @@ public class ServerHandler extends Thread {
     }
 
     private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
-        String type = (String) jsonPayload.get("type");
-        JSONObject response;
+        String type = (String) jsonPayload.get(ServerConstants.TYPE);
+        String kind = (String) jsonPayload.get(ServerConstants.KIND);
 
-        switch (type) {
-            case "Create new identity":
-                boolean isAvailable = Framework.askServers(String.valueOf(jsonPayload.get("identity")), ChatServerConstants.ServerConstants.IDENTITY);
-            case "ASK":
-                logger.debug("Responding to ASK.");
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("REPLY", "test-reply");
-                Messaging.respondClient(jsonObject, serverSocket);
-                // Receives a question.
-                // Respond.
+        switch (type){
+            case ServerConstants.TYPE_CONSENSUS:
+                switch (kind){
+                    case ServerConstants.KIND_VERIFY_UNIQUE:
+                        String value;
+                        String valueType;
+                        if(jsonPayload.containsKey(ServerConstants.IDENTITY)){
+                            value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
+                            valueType = ServerConstants.IDENTITY;
+                        } else{
+                            value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
+                            valueType = ServerConstants.ROOM_ID;
+                        }
+
+                        boolean isAvailable = Consensus.verifyUniqueValue(value, valueType);
+                        HashMap<String, String> responseMap = new HashMap<>();
+                        responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
+                        responseMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
+                        responseMap.put(valueType,value);
+                        responseMap.put(ServerConstants.UNIQUE, String.valueOf(isAvailable));
+                        Messaging.respond(new JSONObject(responseMap), serverSocket);
+                }
         }
     }
 }
