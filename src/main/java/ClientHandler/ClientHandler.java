@@ -77,10 +77,8 @@ public class ClientHandler extends Thread{
                 case ClientConstants.TYPE_WHO:
 
         }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        } catch (IOException | ParseException e) {
+            logger.debug(e);
         }
     }
 }
