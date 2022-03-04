@@ -32,9 +32,21 @@ public class Main {
         logger.debug("Local Coordination Socket Address: " +serverCoordinationSocket.getLocalSocketAddress());
         logger.info("Listening on coordination port: " + serverCoordinationSocket.getLocalPort());
 
-        // Start ServerHandler.
-        ServerHandler serverHandler = new ServerHandler(serverCoordinationSocket);
-        serverHandler.start();
+        Thread serverHandlerLoop = new Thread(()->{
+            while (true){
+                // Start ServerHandler.
+                try {
+                    Socket socket = serverCoordinationSocket.accept();
+                    ServerHandler serverHandler = new ServerHandler(socket);
+                    serverHandler.start();
+                } catch (IOException e) {
+                    logger.debug(e);
+                }
+            }
+        });
+        serverHandlerLoop.setName("Server Handler Loop Thread");
+        serverHandlerLoop.start();
+
 
         // ServerSocket for client communication.
         ServerSocket serverClientSocket = new ServerSocket();

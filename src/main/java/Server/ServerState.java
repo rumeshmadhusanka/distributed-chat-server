@@ -67,6 +67,8 @@ public class ServerState {
                     serversHashmap.put(server.getId(), server);
                 }
             }
+            //TODO remove hardcoded value
+            this.currentLeader = new Leader("s1","localhost",5555);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

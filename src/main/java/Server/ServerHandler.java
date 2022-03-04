@@ -23,27 +23,27 @@ public class ServerHandler extends Thread {
 
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
-    private final ServerSocket serverCoordinationSocket;
+    private final Socket serverCoordinationSocket;
 
-    public ServerHandler(ServerSocket serverCoordinationSocket) {
+    public ServerHandler(Socket serverCoordinationSocket) {
         this.serverCoordinationSocket = serverCoordinationSocket;
     }
 
     @Override
-    public void run(){
-        try{
-            while(true){
-                Socket serverSocket = serverCoordinationSocket.accept();
-                InputStream inputFromClient = serverSocket.getInputStream();
+    public void run() {
+        while (true) {
+            try {
+//                Socket serverSocket = serverCoordinationSocket.accept(); // moved to loop in outer thread
+                InputStream inputFromClient = serverCoordinationSocket.getInputStream();
                 Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
                 String line = serverInputScanner.nextLine();
-                logger.debug("Received: " +line);
+                logger.debug("Received: " + line);
                 JSONParser jsonParser = new JSONParser();
                 JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveServerRequest(jsonPayload, serverSocket);
+                resolveServerRequest(jsonPayload, serverCoordinationSocket);
+            } catch (IOException | ParseException e) {
+                logger.debug(e);
             }
-        } catch (Exception e) {
-
         }
     }
 
