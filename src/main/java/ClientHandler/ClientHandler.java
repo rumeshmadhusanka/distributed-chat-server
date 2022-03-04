@@ -1,24 +1,25 @@
 package ClientHandler;
 
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
+import Consensus.Consensus;
+import Constants.ChatServerConstants;
 import Constants.ChatServerConstants.ClientConstants;
-import Server.Framework;
+import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
-import Messaging.Messaging;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 
-public class ClientHandler extends Thread{
+public class ClientHandler extends Thread {
 
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
-
-    private final Socket clientSocket;
     final Object lock;
+    private final Socket clientSocket;
     private boolean quitFlag;
 
 
@@ -31,20 +32,20 @@ public class ClientHandler extends Thread{
     public void run() {
         try {
             // Start client handler and wait for client to connect.
-            logger.info("Client " + clientSocket.getInetAddress() + ":"+ clientSocket.getPort() + " connected.");
+            logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " connected.");
             //Create Input for the connection
             InputStream inputFromClient = clientSocket.getInputStream();
             Scanner scanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
 
-            while(!quitFlag) {
+            while (!quitFlag) {
                 String line = scanner.nextLine();
-                logger.debug("Received: "+ line);
+                logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
-            logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":"+ clientSocket.getPort());
+            logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
     }
 
@@ -53,11 +54,8 @@ public class ClientHandler extends Thread{
 
         try {
             switch (type) {
-                //TODO: Move the logic from switch-case block to framework. Follow TYPE_CREATE_ID example.
                 case ClientConstants.TYPE_CREATE_ID:
-                    String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                    JSONObject response = Framework.createNewIdentity(identity);
-                    Messaging.respondClient(response, this.clientSocket);
+                    createNewIdentity((String) jsonPayload.get(ClientConstants.IDENTITY));
 
                 case ClientConstants.TYPE_CREATE_ROOM:
                     //TODO: Implement new room logic
@@ -76,9 +74,29 @@ public class ClientHandler extends Thread{
 
                 case ClientConstants.TYPE_WHO:
 
+
+            }
+        } catch (IOException e) {
+            logger.info(e.getMessage());
+        } catch (ParseException e) {
+            logger.info(e.getMessage());
         }
-        } catch (IOException | ParseException e) {
-            logger.debug(e);
-        }
+    }
+
+    public void createNewIdentity(String identity) throws IOException, ParseException {
+        //TODO: Implement new identity logic.
+
+        // Verify identity.
+        boolean isAvailable = Consensus.verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
+
+        // Create identity.
+        // Broadcast identity to other servers.
+        // Send appropriate response.
+        // move client to mainHall.
+        JSONObject response;
+        response = new JSONObject();
+        response.put(ClientConstants.TYPE, ClientConstants.TYPE_CREATE_ID);
+        response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+        Messaging.respond(response, this.clientSocket);
     }
 }

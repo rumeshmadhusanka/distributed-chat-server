@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Messaging {
 
@@ -28,7 +27,7 @@ public class Messaging {
         return (JSONObject) jsonParser.parse(jsonString);
     }
 
-    public static void respondClient(JSONObject obj, Socket socket) throws IOException {
+    public static void respond(JSONObject obj, Socket socket) throws IOException {
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
@@ -50,7 +49,6 @@ public class Messaging {
             dataOutputStream.flush();
             socket.close();
         }
-
     }
 
     /**
