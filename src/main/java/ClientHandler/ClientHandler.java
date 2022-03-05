@@ -74,7 +74,6 @@ public class ClientHandler extends Thread {
 
                 case ClientConstants.TYPE_WHO:
 
-
             }
         } catch (IOException e) {
             logger.info(e.getMessage());
