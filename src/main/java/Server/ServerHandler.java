@@ -12,7 +12,6 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -23,28 +22,25 @@ public class ServerHandler extends Thread {
 
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
-    private final Socket serverCoordinationSocket;
+    private final Socket serverSocket;
 
-    public ServerHandler(Socket serverCoordinationSocket) {
-        this.serverCoordinationSocket = serverCoordinationSocket;
+    public ServerHandler(Socket serverSocket) {
+        this.serverSocket = serverSocket;
     }
 
     @Override
     public void run() {
-        while (true) {
             try {
-//                Socket serverSocket = serverCoordinationSocket.accept(); // moved to loop in outer thread
-                InputStream inputFromClient = serverCoordinationSocket.getInputStream();
+                InputStream inputFromClient = serverSocket.getInputStream();
                 Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
                 String line = serverInputScanner.nextLine();
                 logger.debug("Received: " + line);
                 JSONParser jsonParser = new JSONParser();
                 JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveServerRequest(jsonPayload, serverCoordinationSocket);
+                resolveServerRequest(jsonPayload, serverSocket);
             } catch (IOException | ParseException e) {
                 logger.debug(e);
             }
-        }
     }
 
     private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
