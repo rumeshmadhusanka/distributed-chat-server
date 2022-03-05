@@ -4,15 +4,15 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-
+import Consensus.Consensus;
+import Constants.ChatServerConstants;
 import Constants.ChatServerConstants.ClientConstants;
+import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import Messaging.Messaging;
 
 public class ClientHandler extends Thread{
 
@@ -40,15 +40,14 @@ public class ClientHandler extends Thread{
 
             while(!quitFlag) {
                 String line = scanner.nextLine();
-                System.out.println(line);
-                JSONParser jsonParser = new JSONParser();
-                JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveClientRequest(jsonPayload);
+                logger.debug("Received: " + line);
+                resolveClientRequest(Messaging.jsonParseRequest(line));
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
+        } finally {
+            logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
-        System.out.println("Connection has ended");
     }
 
     public void resolveClientRequest(JSONObject jsonPayload) {
@@ -68,7 +67,7 @@ public class ClientHandler extends Thread{
                         response.put(ClientConstants.TYPE, type);
                         response.put(ClientConstants.APPROVED, ClientConstants.FALSE);
                     }
-                    Messaging.respondClient(response, this.clientSocket);
+                    Messaging.respond(response, this.clientSocket);
 
                 case ClientConstants.TYPE_CREATE_ROOM:
                     String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
@@ -77,7 +76,7 @@ public class ClientHandler extends Thread{
                     response.put(ClientConstants.TYPE, type);
                     response.put(ClientConstants.ROOM_ID, roomId);
                     response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
-                    Messaging.respondClient(response, this.clientSocket);
+                    Messaging.respond(response, this.clientSocket);
 
                 case ClientConstants.TYPE_DELETE_ROOM:
 
@@ -94,10 +93,26 @@ public class ClientHandler extends Thread{
 
                 case ClientConstants.TYPE_WHO:
 
-        }
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info(e.getMessage());
         }
     }
 
+    public void createNewIdentity(String identity) throws IOException, ParseException {
+        //TODO: Implement new identity logic.
+
+        // Verify identity.
+        boolean isAvailable = Consensus.verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
+
+        // Create identity.
+        // Broadcast identity to other servers.
+        // Send appropriate response.
+        // move client to mainHall.
+        JSONObject response;
+        response = new JSONObject();
+        response.put(ClientConstants.TYPE, ClientConstants.TYPE_CREATE_ID);
+        response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+        Messaging.respond(response, this.clientSocket);
+    }
 }

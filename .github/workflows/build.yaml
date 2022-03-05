@@ -5,7 +5,7 @@ name: Maven Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
     branches: [ master ]
 
@@ -30,5 +30,11 @@ jobs:
           python-version: "3.8"
       - name: Install test requirements
         run: pip install pexpect
+      - name: Start servers
+        run: bash build-and-run.sh > server-log.txt 2>&1 &
       - name: Test the server
         run: python test.py
+      - name: Print the sever log
+        if: always()
+        run: cat server-log.txt
+
