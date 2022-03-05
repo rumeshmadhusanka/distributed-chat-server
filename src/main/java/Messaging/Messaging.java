@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import Constants.ServerProperties;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.*;
+
 
 public class Messaging {
 
@@ -62,8 +64,7 @@ public class Messaging {
      */
     public static ConcurrentHashMap<String, JSONObject> askServers(JSONObject request, Collection<Server> servers) {
         ConcurrentHashMap<String, JSONObject> serverResponses = new ConcurrentHashMap<>();
-        // TODO replace 5 with a config
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        ExecutorService executorService = Executors.newFixedThreadPool(ServerProperties.THREAD_COUNT);
         for (Server server : servers) {
             executorService.submit(() -> {
                 try {
@@ -87,8 +88,7 @@ public class Messaging {
         executorService.shutdown();
         try {
             //wait till completion or 5s or interruption of this thread
-            //TODO replace 5s with a config
-            if (!executorService.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
+            if (!executorService.awaitTermination(ServerProperties.CONN_TIMEOUT, TimeUnit.MILLISECONDS)) {
                 executorService.shutdownNow();
             }
         } catch (InterruptedException ex) {
