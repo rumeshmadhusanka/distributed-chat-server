@@ -58,11 +58,16 @@ public class ClientHandler extends Thread{
         try {
             switch (type) {
                 case ClientConstants.TYPE_CREATE_ID:
-                    String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                    //TODO: Implement new identity logic
                     response = new JSONObject();
-                    response.put(ClientConstants.TYPE, type);
-                    response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+                    String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
+                    if ((identity.length() > 3) && (identity.length() <= 16) && Character.isLetter(identity.charAt(0))){
+                        response.put(ClientConstants.TYPE, type);
+                        response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+
+                    }else{
+                        response.put(ClientConstants.TYPE, type);
+                        response.put(ClientConstants.APPROVED, ClientConstants.FALSE);
+                    }
                     Messaging.respondClient(response, this.clientSocket);
 
                 case ClientConstants.TYPE_CREATE_ROOM:
@@ -85,6 +90,7 @@ public class ClientHandler extends Thread{
                 case ClientConstants.TYPE_MOVE_JOIN:
 
                 case ClientConstants.TYPE_QUIT:
+                    this.quitFlag = true;
 
                 case ClientConstants.TYPE_WHO:
 
