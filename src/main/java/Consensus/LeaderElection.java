@@ -16,10 +16,14 @@ import java.util.stream.Collectors;
 
 
 public class LeaderElection {
-    private static final String thisServerId = ServerState.getServerState().getServerId();
-    private static final Collection<Server> allServers = ServerState.getServerState().getServers();
     private static final Logger logger = LogManager.getLogger(LeaderElection.class);
     private static boolean electionStarter = false;
+    private static boolean electionFlag = false;
+
+    //No objects from LeaderElection class
+    private LeaderElection(){
+
+    }
 
     public static void startElection() {
         electionStarter = true;
@@ -31,6 +35,14 @@ public class LeaderElection {
 
         }
 
+    }
+
+    private static String getThisServerId(){
+        return ServerState.getServerState().getServerId();
+    }
+
+    private static Collection<Server> getAllServers(){
+        return ServerState.getServerState().getServers();
     }
 
     /**
@@ -50,7 +62,7 @@ public class LeaderElection {
     }
 
     private static Collection<JSONObject> sendElectionStartMessage() {
-        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTION, thisServerId);
+        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTION, getThisServerId());
         return Messaging.askServers(message, ServerState.getServerState().getServers()).values();
     }
 
@@ -61,11 +73,11 @@ public class LeaderElection {
      * @param electionStarterId Server ID of the election starter
      */
     private static void replyOK(String electionStarterId) {
-        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_OK, thisServerId);
+        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_OK, getThisServerId());
         for (Server s : ServerState.getServerState().getServers()) {
             if (s.getId().equals(electionStarterId) &&
-                    Integer.parseInt(thisServerId) > Integer.parseInt(electionStarterId)) {
-                logger.debug("Sending OK message to: " + electionStarterId + " from: " + thisServerId);
+                    Integer.parseInt(getThisServerId()) > Integer.parseInt(electionStarterId)) {
+                logger.debug("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
                 Messaging.askServers(new JSONObject(message), List.of(s));
                 return;
             }
@@ -79,7 +91,7 @@ public class LeaderElection {
      * @param repliedServers servers that replied OK
      */
     private static void sendElectedMessage(Collection<Server> repliedServers) {
-        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTED, thisServerId); //sent by this server
+        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTED, getThisServerId()); //sent by this server
         Server max = repliedServers.stream().max(new Server.ServerComparator()).stream().findFirst().orElse(null);
         if (max == null) {
             logger.error("No servers have replied");
@@ -89,19 +101,19 @@ public class LeaderElection {
     }
 
     private static void receiveElectedMessage() {
-        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTED, thisServerId); //sent by this server
-        Predicate<Server> higherServerPredicate = server -> Integer.parseInt(server.getId()) > Integer.parseInt(thisServerId);
-        Collection<Server> higherServers = allServers.stream().filter(higherServerPredicate).collect(Collectors.toList());
+        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_ELECTED, getThisServerId()); //sent by this server
+        Predicate<Server> higherServerPredicate = server -> Integer.parseInt(server.getId()) > Integer.parseInt(getThisServerId());
+        Collection<Server> higherServers = getAllServers().stream().filter(higherServerPredicate).collect(Collectors.toList());
         if (!higherServers.isEmpty()) {
             Messaging.askServers(new JSONObject(message), higherServers);
         } else {
-            logger.debug("I am the server with the highest server ID: "+thisServerId);
+            logger.debug("I am the server with the highest server ID: "+getThisServerId());
         }
     }
 
 
     private static void announceToTheWorld() {
-        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_COORDINATOR, thisServerId);
-        Messaging.askServers(new JSONObject(message), allServers);
+        JSONObject message = buildElectionJSON(ChatServerConstants.BullyConstants.KIND_COORDINATOR, getThisServerId());
+        Messaging.askServers(new JSONObject(message), getAllServers());
     }
 }
