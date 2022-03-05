@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import Constants.ServerProperties;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -16,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.*;
+
 
 public class Messaging {
 
@@ -53,32 +56,44 @@ public class Messaging {
 
     /**
      * Only executed by the leader.
+     * Asks something from each server in the servers Collection
      *
      * @param request - request Json.
      * @param servers - List of servers.
      * @return - Responses Map.
-     * @throws IOException
-     * @throws ParseException
      */
-    public static HashMap<String, JSONObject> askServers(JSONObject request, Collection<Server> servers) throws IOException, ParseException {
-        HashMap<String, JSONObject> serverResponses = new HashMap<>();
+    public static ConcurrentHashMap<String, JSONObject> askServers(JSONObject request, Collection<Server> servers) {
+        ConcurrentHashMap<String, JSONObject> serverResponses = new ConcurrentHashMap<>();
+        ExecutorService executorService = Executors.newFixedThreadPool(ServerProperties.THREAD_COUNT);
         for (Server server : servers) {
-            try {
-                Socket socket = new Socket(server.getAddress(), server.getPort());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-                dataOutputStream.flush();
+            executorService.submit(() -> {
+                try {
+                    Socket socket = new Socket(server.getAddress(), server.getPort());
+                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                    dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                    dataOutputStream.flush();
 
-                InputStream inputFromClient = socket.getInputStream();
-                Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
-                String line = serverInputScanner.nextLine();
-                logger.debug("Received: " +line);
-                serverResponses.put(server.getId(),jsonParseRequest(line));
-                socket.close();
-            } catch (Exception e){
-                logger.info("Connection failed for server: "+ server.getAddress() +":" + server.getPort());
-                logger.debug(e.getMessage());
+                    InputStream inputFromClient = socket.getInputStream();
+                    Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
+                    String line = serverInputScanner.nextLine();
+                    logger.debug("Received: " + line);
+                    serverResponses.put(server.getId(), jsonParseRequest(line));
+                    socket.close();
+                } catch (Exception e) {
+                    logger.info("Connection failed for server: " + server.getAddress() + ":" + server.getPort());
+                    logger.debug(e.getMessage());
+                }
+            });
+        }
+        executorService.shutdown();
+        try {
+            //wait till completion or 5s or interruption of this thread
+            if (!executorService.awaitTermination(ServerProperties.CONN_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow();
             }
+        } catch (InterruptedException ex) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
         }
         return serverResponses;
     }

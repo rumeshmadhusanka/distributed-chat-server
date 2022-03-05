@@ -33,7 +33,7 @@ public class ChatServerConstants {
         public static final String ROOM_ID = "roomid";
     }
 
-    public class BullyConstants {
+    public static class BullyConstants {
 
         public static final String SERVER_ID = "serverid";
 
@@ -68,7 +68,7 @@ public class ChatServerConstants {
 
     }
 
-    public class ServerExceptionConstants {
+    public static class ServerExceptionConstants {
         public static final String LEADER_FAILED_MSG = "Leader failed.";
         public static final String LEADER_FAILED_CODE = "SE-01";
     }

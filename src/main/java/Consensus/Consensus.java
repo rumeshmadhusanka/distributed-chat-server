@@ -12,14 +12,28 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Consensus {
-
-    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException {
+    /**
+     * Whether this server is the current leader
+     *
+     * @return boolean
+     */
+    private static boolean isLeader() {
         Leader leader = ServerState.getServerState().getCurrentLeader();
+        return ServerState.getServerState().getServerId().equals(leader.getId());
+    }
+
+    /**
+     * @param value   the value you want to verify whether it is unique or not
+     * @param askType room | identity
+     */
+    public static boolean verifyUniqueValue(String value, String askType) {
         boolean isUnique = true;
-        if (ServerState.getServerState().getServerId().equals(leader.getId())) {
+        if (isLeader()) {
             // Get verification from every server.
+            // build the request
             HashMap<String, String> hashMap = new HashMap<>();
             hashMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
             hashMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
@@ -31,7 +45,7 @@ public class Consensus {
                     hashMap.put(ServerConstants.ROOM_ID, value);
             }
             Collection<Server> servers = ServerState.getServerState().getServers();
-            HashMap<String, JSONObject> responses = Messaging.askServers(new JSONObject(hashMap), servers);
+            ConcurrentHashMap<String, JSONObject> responses = Messaging.askServers(new JSONObject(hashMap), servers);
 
             for (JSONObject response : responses.values()) {
                 if (Boolean.parseBoolean((String) response.get("unique"))) {
