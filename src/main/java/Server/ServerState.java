@@ -25,10 +25,9 @@ public class ServerState {
 
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>();
-    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>();
-
-    private Leader currentLeader;
+    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive
+    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
+    private Leader currentLeader = null;
 
     private static ServerState serverState;
 
