@@ -88,7 +88,7 @@ public class Messaging {
         try {
             //wait till completion or 5s or interruption of this thread
             //TODO replace 5s with a config
-            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+            if (!executorService.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
                 executorService.shutdownNow();
             }
         } catch (InterruptedException ex) {
