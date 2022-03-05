@@ -57,6 +57,7 @@ public class Consensus {
             try {
                 // TODO:Contact leader for verification.
 
+
                 // Throw an error if connection to leader fails. (Implement this within connection method).
                 throw new ServerException(
                         ServerExceptionConstants.LEADER_FAILED_MSG,
@@ -66,7 +67,8 @@ public class Consensus {
 
             } catch (ServerException err) {
                 if (err.getCode().equals(ServerExceptionConstants.LEADER_FAILED_CODE)) {
-                    // TODO:Start Election
+                    LeaderElection.startElection();
+                    verifyUniqueValue(value, askType);
                 }
             }
         }
