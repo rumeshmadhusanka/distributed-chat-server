@@ -2,7 +2,7 @@ package Server;
 
 import ClientHandler.ClientHandler;
 import Consensus.Consensus;
-import Constants.ChatServerConstants.BullyConstants;
+import Constants.ChatServerConstants.ServerConstants;
 import Constants.ChatServerConstants.ServerConstants;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
@@ -98,15 +98,15 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
                         // TODO: Inform servers
                 }
-            case BullyConstants.TYPE_BULLY:
+            case ServerConstants.TYPE_BULLY:
                 switch (kind) {
-                    case BullyConstants.KIND_ELECTION:
+                    case ServerConstants.KIND_ELECTION:
                         // TODO:
-                    case BullyConstants.KIND_OK:
+                    case ServerConstants.KIND_OK:
                         // TODO:
-                    case BullyConstants.KIND_ELECTED:
+                    case ServerConstants.KIND_ELECTED:
                         // TODO:
-                    case BullyConstants.KIND_COORDINATOR:
+                    case ServerConstants.KIND_COORDINATOR:
                         // TODO:
                 }
         }
