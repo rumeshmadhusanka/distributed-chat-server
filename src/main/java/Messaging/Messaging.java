@@ -1,23 +1,29 @@
 package Messaging;
 
+import Consensus.Leader;
+import Constants.ChatServerConstants;
+import Constants.ServerProperties;
 import Server.Server;
 import Server.ServerState;
+import Exception.ServerException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import Constants.ServerProperties;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 
 public class Messaging {
@@ -40,7 +46,7 @@ public class Messaging {
     /**
      * Send a given json response via a given socket.
      *
-     * @param obj - Response as a json object
+     * @param obj    - Response as a json object
      * @param socket - Socket of the receiver.
      * @throws IOException
      */
@@ -48,37 +54,6 @@ public class Messaging {
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
-    }
-
-    // TODO: Remove following 2 methods once we proceed with gossiping.
-    /**
-     * Broadcast a json to all connected clients.
-     *
-     * @param obj - JSONObject to be sent to clients.
-     * @throws IOException
-     */
-    public static void broadcastClients(JSONObject obj) throws IOException {
-        //TODO: Need to handle this in the same way broadcastServers is implemented.
-//        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-//        dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-//        dataOutputStream.flush();
-    }
-
-    /**
-     * Broadcast a json to all servers in the cluster.
-     *
-     * @param obj - JSONObject to be sent to servers.
-     * @throws IOException
-     */
-    public static void broadcastServers(JSONObject obj) throws IOException {
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        for (Server server : servers) {
-            Socket socket = new Socket(server.getAddress(), server.getPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-            socket.close();
-        }
     }
 
     /**
@@ -96,14 +71,7 @@ public class Messaging {
             executorService.submit(() -> {
                 try {
                     Socket socket = new Socket(server.getAddress(), server.getPort());
-                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                    dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-                    dataOutputStream.flush();
-
-                    InputStream inputFromClient = socket.getInputStream();
-                    Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
-                    String line = serverInputScanner.nextLine();
-                    logger.debug("Received: " + line);
+                    String line = sendRequest(request, socket);
                     serverResponses.put(server.getId(), jsonParseRequest(line));
                     socket.close();
                 } catch (Exception e) {
@@ -125,5 +93,32 @@ public class Messaging {
         return serverResponses;
     }
 
+    public static JSONObject contactLeader(JSONObject request, Leader leader) throws ServerException, IOException, ParseException {
 
+        Socket socket = new Socket(leader.getAddress(), leader.getPort());
+        socket.setSoTimeout((int) ServerProperties.CONN_TIMEOUT);
+        try {
+            String line = sendRequest(request, socket);
+            socket.close();
+            return jsonParseRequest(line);
+        } catch (SocketTimeoutException e){
+            // Throw an error if connection to leader fails.
+            logger.info("Connection to leader timed out.");
+            throw new ServerException(
+                    ChatServerConstants.ServerExceptionConstants.LEADER_FAILED_MSG,
+                    ChatServerConstants.ServerExceptionConstants.LEADER_FAILED_CODE);
+        }
+    }
+
+    private static String sendRequest(JSONObject request, Socket socket) throws IOException {
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.flush();
+
+        InputStream inputFromClient = socket.getInputStream();
+        Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
+        String line = serverInputScanner.nextLine();
+        logger.debug("Received: " + line);
+        return line;
+    }
 }

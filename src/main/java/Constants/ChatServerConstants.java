@@ -70,8 +70,11 @@ public class ChatServerConstants {
     }
 
     public static class ServerExceptionConstants {
+        public static final String NO_LEADER_MSG = "No elected leader present.";
+        public static final String NO_LEADER_CODE = "SE-01";
+
         public static final String LEADER_FAILED_MSG = "Leader failed.";
-        public static final String LEADER_FAILED_CODE = "SE-01";
+        public static final String LEADER_FAILED_CODE = "SE-02";
     }
 
 }

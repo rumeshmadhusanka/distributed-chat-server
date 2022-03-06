@@ -3,7 +3,7 @@ package Server;
 import ClientHandler.ClientHandler;
 import Consensus.Consensus;
 import Constants.ChatServerConstants.ServerConstants;
-import Constants.ChatServerConstants.ServerConstants;
+import Exception.ServerException;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,9 +38,9 @@ public class ServerHandler extends Thread {
             logger.debug("Received: " + line);
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-            resolveServerRequest(jsonPayload, serverSocket);
-        } catch (IOException | ParseException e) {
-            logger.debug(e);
+            resolveServerRequest(jsonPayload);
+        } catch (IOException | ParseException | ServerException e) {
+            logger.debug(e.getMessage());
         }
     }
 
@@ -48,11 +48,11 @@ public class ServerHandler extends Thread {
      * Resolve a received json request.
      *
      * @param jsonPayload - Received payload as a JSONObject.
-     * @param serverSocket - Connection socket.
      * @throws IOException
      * @throws ParseException
+     * @throws ServerException
      */
-    private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
+    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException {
         String type = (String) jsonPayload.get(ServerConstants.TYPE);
         String kind = (String) jsonPayload.get(ServerConstants.KIND);
 
