@@ -8,10 +8,12 @@ import Consensus.Consensus;
 import Constants.ChatServerConstants;
 import Constants.ChatServerConstants.ClientConstants;
 import Messaging.Messaging;
+import Server.Room;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import Server.ServerState;
 
 
 public class ClientHandler extends Thread{
@@ -60,8 +62,7 @@ public class ClientHandler extends Thread{
                     response = new JSONObject();
                     String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
                     if ((identity.length() > 3) && (identity.length() <= 16) && Character.isLetter(identity.charAt(0))){
-                        response.put(ClientConstants.TYPE, type);
-                        response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+                        createNewIdentity(identity);
 
                     }else{
                         response.put(ClientConstants.TYPE, type);
@@ -96,23 +97,33 @@ public class ClientHandler extends Thread{
             }
         } catch (IOException e) {
             logger.info(e.getMessage());
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
 
     public void createNewIdentity(String identity) throws IOException, ParseException {
         //TODO: Implement new identity logic.
+        JSONObject response;
 
         // Verify identity.
         boolean isAvailable = Consensus.verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
-
-        // Create identity.
+        if(isAvailable){
+            // Create identity.
+            ServerState.getServerState().addIdentity(identity);
+        }
+        Messaging.broadcastToPreviousRoom();
         // Broadcast identity to other servers.
+        Messaging.broadcastClients(new JSONObject());
         // Send appropriate response.
         // move client to mainHall.
-        JSONObject response;
+        ServerState.getServerState().getRoom(ChatServerConstants.ServerConstants.MAIN_HALL).addClientIdentity(identity);
+
         response = new JSONObject();
         response.put(ClientConstants.TYPE, ClientConstants.TYPE_CREATE_ID);
         response.put(ClientConstants.APPROVED, ClientConstants.TRUE);
         Messaging.respond(response, this.clientSocket);
     }
+
+
 }

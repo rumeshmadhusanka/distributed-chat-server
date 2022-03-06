@@ -36,11 +36,15 @@ public class Messaging {
         dataOutputStream.flush();
     }
 
-    public static void broadcastClients(JSONObject obj) throws IOException {
+    public static void broadcastClients(JSONObject obj){
         //TODO: Need to handle this in the same way broadcastServers is implemented.
 //        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
 //        dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 //        dataOutputStream.flush();
+    }
+
+    public static void broadcastToPreviousRoom(){
+        //TODO: Implement the broadcasting to previous server
     }
 
     public static void broadcastServers(JSONObject obj) throws IOException {
