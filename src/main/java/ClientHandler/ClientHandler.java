@@ -4,6 +4,7 @@ import Consensus.Consensus;
 import Constants.ChatServerConstants;
 import Constants.ChatServerConstants.ClientConstants;
 import Messaging.Messaging;
+import Exception.ServerException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -42,8 +43,8 @@ public class ClientHandler extends Thread {
                 logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
+        } catch (IOException | ParseException | ServerException e) {
+            logger.info(e.getMessage());
         } finally {
             logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
@@ -54,7 +55,7 @@ public class ClientHandler extends Thread {
      *
      * @param jsonPayload -  Request as a JSONObject.
      */
-    public void resolveClientRequest(JSONObject jsonPayload) {
+    public void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException {
         String type = (String) jsonPayload.get("type");
 
         try {
@@ -80,10 +81,8 @@ public class ClientHandler extends Thread {
                 case ClientConstants.TYPE_WHO:
 
             }
-        } catch (IOException e) {
-            logger.info(e.getMessage());
-        } catch (ParseException e) {
-            logger.info(e.getMessage());
+        } catch (IOException | ServerException | ParseException e) {
+            throw e;
         }
     }
 
@@ -94,7 +93,7 @@ public class ClientHandler extends Thread {
      * @throws IOException
      * @throws ParseException
      */
-    public void createNewIdentity(String identity) throws IOException, ParseException {
+    public void createNewIdentity(String identity) throws IOException, ParseException, ServerException {
         //TODO: Implement new identity logic.
 
         // Verify identity.

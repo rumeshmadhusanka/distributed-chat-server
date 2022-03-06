@@ -13,6 +13,10 @@ public class ChatServerConstants {
         public static final String MAIN_HALL = "MainHall";
         public static final String UNIQUE = "unique";
 
+        public static final String IDENTITY = "identity";
+        public static final String ROOM_ID = "roomid";
+        public static final String SERVER_ID = "serverid";
+
         public static final String TYPE = "type";
         public static final String TYPE_CONSENSUS = "consensus";
         public static final String TYPE_GOSSIP = "gossip";
@@ -32,18 +36,9 @@ public class ChatServerConstants {
         public static final String KIND_INFORM_NEW_ROOM = "informnewroom";
         public static final String KIND_INFORM_DELETE_ROOM = "informdeleteroom";
 
-        public static final String IDENTITY = "identity";
-        public static final String ROOM_ID = "roomid";
-    }
 
-    public static class BullyConstants {
-
-        public static final String SERVER_ID = "serverid";
-
-        public static final String TYPE = "type";
         public static final String TYPE_BULLY = "bully";
 
-        public static final String KIND = "kind";
         public static final String KIND_ELECTION = "election";
         public static final String KIND_OK = "ok";
         public static final String KIND_ELECTED = "elected";
@@ -75,8 +70,11 @@ public class ChatServerConstants {
     }
 
     public static class ServerExceptionConstants {
+        public static final String NO_LEADER_MSG = "No elected leader present.";
+        public static final String NO_LEADER_CODE = "SE-01";
+
         public static final String LEADER_FAILED_MSG = "Leader failed.";
-        public static final String LEADER_FAILED_CODE = "SE-01";
+        public static final String LEADER_FAILED_CODE = "SE-02";
     }
 
 }
