@@ -33,6 +33,7 @@ public class Main {
         logger.debug("Local Coordination Socket Address: " +serverCoordinationSocket.getLocalSocketAddress());
         logger.info("Listening on coordination port: " + serverCoordinationSocket.getLocalPort());
 
+        // Start listening to server connections.
         Thread serverHandlerLoop = new Thread(()->{
             while (true){
                 // Start ServerHandler.

@@ -36,5 +36,7 @@ jobs:
         run: python test.py
       - name: Print the sever log
         if: always()
-        run: cat server-log.txt
+        run: |
+          sleep 30
+          cat server-log.txt
 

@@ -3,6 +3,7 @@ package Server;
 import ClientHandler.ClientHandler;
 import Consensus.Consensus;
 import Constants.ChatServerConstants.ServerConstants;
+import Exception.ServerException;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,7 +13,6 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -23,44 +23,49 @@ public class ServerHandler extends Thread {
 
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
-    private final Socket serverCoordinationSocket;
+    private final Socket serverSocket;
 
-    public ServerHandler(Socket serverCoordinationSocket) {
-        this.serverCoordinationSocket = serverCoordinationSocket;
+    public ServerHandler(Socket serverSocket) {
+        this.serverSocket = serverSocket;
     }
 
     @Override
     public void run() {
-        while (true) {
-            try {
-//                Socket serverSocket = serverCoordinationSocket.accept(); // moved to loop in outer thread
-                InputStream inputFromClient = serverCoordinationSocket.getInputStream();
-                Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
-                String line = serverInputScanner.nextLine();
-                logger.debug("Received: " + line);
-                JSONParser jsonParser = new JSONParser();
-                JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
-                resolveServerRequest(jsonPayload, serverCoordinationSocket);
-            } catch (IOException | ParseException e) {
-                logger.debug(e);
-            }
+        try {
+            InputStream inputFromClient = serverSocket.getInputStream();
+            Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
+            String line = serverInputScanner.nextLine();
+            logger.debug("Received: " + line);
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
+            resolveServerRequest(jsonPayload);
+        } catch (IOException | ParseException | ServerException e) {
+            logger.debug(e.getMessage());
         }
     }
 
-    private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
+    /**
+     * Resolve a received json request.
+     *
+     * @param jsonPayload - Received payload as a JSONObject.
+     * @throws IOException
+     * @throws ParseException
+     * @throws ServerException
+     */
+    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException {
         String type = (String) jsonPayload.get(ServerConstants.TYPE);
         String kind = (String) jsonPayload.get(ServerConstants.KIND);
 
-        switch (type){
+        switch (type) {
             case ServerConstants.TYPE_CONSENSUS:
-                switch (kind){
+                switch (kind) {
                     case ServerConstants.KIND_VERIFY_UNIQUE:
                         String value;
                         String valueType;
-                        if(jsonPayload.containsKey(ServerConstants.IDENTITY)){
+                        if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
                             value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
                             valueType = ServerConstants.IDENTITY;
-                        } else{
+                        } else {
                             value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
                             valueType = ServerConstants.ROOM_ID;
                         }
@@ -69,9 +74,40 @@ public class ServerHandler extends Thread {
                         HashMap<String, String> responseMap = new HashMap<>();
                         responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
                         responseMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
-                        responseMap.put(valueType,value);
+                        responseMap.put(valueType, value);
                         responseMap.put(ServerConstants.UNIQUE, String.valueOf(isAvailable));
                         Messaging.respond(new JSONObject(responseMap), serverSocket);
+                    case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
+                        String identity = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
+                        boolean isIdAvail = Consensus.verifyUniqueValue(identity, ServerConstants.IDENTITY);
+                        // TODO: Respond
+
+                    case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
+                        String roomId = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
+                        boolean isRoomAvail = Consensus.verifyUniqueValue(roomId, ServerConstants.IDENTITY);
+                        // TODO: Respond
+                }
+            case ServerConstants.TYPE_GOSSIP:
+                switch (kind) {
+                    case ServerConstants.KIND_INFORM_NEW_IDENTITY:
+                        // TODO: Inform servers
+                    case ServerConstants.KIND_INFORM_DELETE_IDENTITY:
+                        // TODO: Inform servers
+                    case ServerConstants.KIND_INFORM_NEW_ROOM:
+                        // TODO: Inform servers
+                    case ServerConstants.KIND_INFORM_DELETE_ROOM:
+                        // TODO: Inform servers
+                }
+            case ServerConstants.TYPE_BULLY:
+                switch (kind) {
+                    case ServerConstants.KIND_ELECTION:
+                        // TODO:
+                    case ServerConstants.KIND_OK:
+                        // TODO:
+                    case ServerConstants.KIND_ELECTED:
+                        // TODO:
+                    case ServerConstants.KIND_COORDINATOR:
+                        // TODO:
                 }
         }
     }
