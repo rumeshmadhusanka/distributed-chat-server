@@ -36,6 +36,7 @@ public class ChatServerConstants {
         public static final String KIND_INFORM_NEW_ROOM = "informnewroom";
         public static final String KIND_INFORM_DELETE_ROOM = "informdeleteroom";
 
+        public static final String SUCCESS = "success";
 
         public static final String TYPE_BULLY = "bully";
 

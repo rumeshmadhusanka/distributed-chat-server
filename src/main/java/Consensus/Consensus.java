@@ -87,7 +87,13 @@ public class Consensus {
 
                 // Contact leader for verification.
                 JSONObject response = Messaging.contactLeader(new JSONObject(request), currentLeader);
-                return Boolean.parseBoolean((String) response.get(""));
+
+                // Return response received from the leader.
+                String responseKind = (String) response.get(ServerConstants.KIND);
+                if(responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_IDENTITY) ||
+                        responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_ROOM)){
+                    isUnique =  Boolean.parseBoolean((String) response.get(ServerConstants.SUCCESS));
+                }
 
             } catch (ServerException err) {
                 // Start leader election if
