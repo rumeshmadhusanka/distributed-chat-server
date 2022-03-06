@@ -1,0 +1,6 @@
+.debug
+.github
+target/
+.idea/
+*.jar
+*.py
