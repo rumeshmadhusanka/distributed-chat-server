@@ -58,7 +58,7 @@ public class Messaging {
 
     /**
      * Only executed by the leader.
-     * Asks something from each server in the servers Collection
+     * Asks something from each server in the servers Collection, then get a reply.
      *
      * @param request - request Json.
      * @param servers - List of servers.
@@ -91,6 +91,37 @@ public class Messaging {
             Thread.currentThread().interrupt();
         }
         return serverResponses;
+    }
+
+    /**
+     * Send and forget a message. Unidirectional; Doesn't wait for the other party to respond.
+     * @param request JSON request to send
+     * @param servers Collection of servers to send the message
+     */
+    public static void sendAndForget(JSONObject request, Collection<Server> servers) {
+        ExecutorService executorService = Executors.newFixedThreadPool(ServerProperties.THREAD_COUNT);
+        for (Server server : servers) {
+            executorService.submit(() -> {
+                try {
+                    Socket socket = new Socket(server.getAddress(), server.getPort());
+                    sendRequest(request, socket);
+                    socket.close();
+                } catch (Exception e) {
+                    logger.info("Connection failed for server: " + server.getAddress() + ":" + server.getPort());
+                    logger.debug(e.getMessage());
+                }
+            });
+        }
+        executorService.shutdown();
+        try {
+            //wait till completion or 5s or interruption of this thread
+            if (!executorService.awaitTermination(ServerProperties.CONN_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     public static JSONObject contactLeader(JSONObject request, Leader leader) throws ServerException, IOException, ParseException {

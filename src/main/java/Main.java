@@ -17,6 +17,7 @@ public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException {
+        //TODO Every server socket should bind to the 0.0.0.0 when deploying to GCP/AWS. Other server's external ips should be stored in Server objects
 
         // Initialize server state.
         logger.info("Server Id: " + args[0] + "Conf file path:" + args[1]);
