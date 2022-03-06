@@ -49,6 +49,11 @@ public class ClientHandler extends Thread {
         }
     }
 
+    /**
+     * Resolve a given request.
+     *
+     * @param jsonPayload -  Request as a JSONObject.
+     */
     public void resolveClientRequest(JSONObject jsonPayload) {
         String type = (String) jsonPayload.get("type");
 
@@ -82,6 +87,13 @@ public class ClientHandler extends Thread {
         }
     }
 
+    /**
+     * Create a new identity.
+     *
+     * @param identity - New identity received from the client.
+     * @throws IOException
+     * @throws ParseException
+     */
     public void createNewIdentity(String identity) throws IOException, ParseException {
         //TODO: Implement new identity logic.
 

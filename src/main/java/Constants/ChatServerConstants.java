@@ -5,6 +5,9 @@ public class ChatServerConstants {
 
     }
 
+    /**
+     * Constants related to Server.
+     */
     public static class ServerConstants{
 
         public static final String MAIN_HALL = "MainHall";
@@ -47,6 +50,9 @@ public class ChatServerConstants {
         public static final String KIND_COORDINATOR = "coordinator";
     }
 
+    /**
+     * Constants related to Client
+     */
     public static class ClientConstants {
         public static final String TYPE = "type";
         public static final String TYPE_CREATE_ID = "newidentity";
