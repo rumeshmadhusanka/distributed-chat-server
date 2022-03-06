@@ -24,18 +24,38 @@ public class Messaging {
 
     private static final Logger logger = LogManager.getLogger(Messaging.class);
 
+    /**
+     * JSON parse a given string.
+     *
+     * @param jsonString - String containing json object
+     * @return - JSONObject
+     * @throws ParseException
+     */
     public static JSONObject jsonParseRequest(String jsonString) throws ParseException {
 
         JSONParser jsonParser = new JSONParser();
         return (JSONObject) jsonParser.parse(jsonString);
     }
 
+    /**
+     * Send a given json response via a given socket.
+     *
+     * @param obj - Response as a json object
+     * @param socket - Socket of the receiver.
+     * @throws IOException
+     */
     public static void respond(JSONObject obj, Socket socket) throws IOException {
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
     }
 
+    /**
+     * Broadcast a json to all connected clients.
+     *
+     * @param obj - JSONObject to be sent to clients.
+     * @throws IOException
+     */
     public static void broadcastClients(JSONObject obj) throws IOException {
         //TODO: Need to handle this in the same way broadcastServers is implemented.
 //        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
@@ -43,6 +63,12 @@ public class Messaging {
 //        dataOutputStream.flush();
     }
 
+    /**
+     * Broadcast a json to all servers in the cluster.
+     *
+     * @param obj - JSONObject to be sent to servers.
+     * @throws IOException
+     */
     public static void broadcastServers(JSONObject obj) throws IOException {
         Collection<Server> servers = ServerState.getServerState().getServers();
         for (Server server : servers) {

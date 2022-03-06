@@ -26,6 +26,8 @@ public class Consensus {
     }
 
     /**
+     * Verify whether a given value is unique across all servers.
+     *
      * @param value   the value you want to verify whether it is unique or not
      * @param askType room | identity
      */

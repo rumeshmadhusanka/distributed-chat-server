@@ -44,6 +44,14 @@ public class ServerHandler extends Thread {
         }
     }
 
+    /**
+     * Resolve a received json request.
+     *
+     * @param jsonPayload - Received payload as a JSONObject.
+     * @param serverSocket - Connection socket.
+     * @throws IOException
+     * @throws ParseException
+     */
     private void resolveServerRequest(JSONObject jsonPayload, Socket serverSocket) throws IOException, ParseException {
         String type = (String) jsonPayload.get(ServerConstants.TYPE);
         String kind = (String) jsonPayload.get(ServerConstants.KIND);
