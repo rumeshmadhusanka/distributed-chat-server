@@ -57,7 +57,7 @@ public class ClientHandler extends Thread{
      *
      * @param jsonPayload -  Request as a JSONObject.
      */
-    public void resolveClientRequest(JSONObject jsonPayload) {
+    public void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException {
         String type = (String) jsonPayload.get("type");
         JSONObject response;
 
