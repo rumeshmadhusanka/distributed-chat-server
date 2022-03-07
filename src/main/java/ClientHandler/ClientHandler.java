@@ -36,7 +36,6 @@ public class ClientHandler extends Thread{
         try {
             // Start client handler and wait for client to connect.
             logger.info("Client " + clientSocket.getInetAddress() + ":"+ clientSocket.getPort() + " connected.");
-            System.out.println("Client" + clientSocket.getInetAddress() + ":"+ clientSocket.getPort() + " connected.");
             //Create Input for the connection
             InputStream inputFromClient = clientSocket.getInputStream();
             Scanner scanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
@@ -47,7 +46,7 @@ public class ClientHandler extends Thread{
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
         } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            logger.debug("Exception occurred " + e);
         } finally {
             logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
@@ -121,7 +120,7 @@ public class ClientHandler extends Thread{
             }
             Messaging.broadcastToPreviousRoom();
             // Broadcast identity to other servers.
-            Messaging.broadcastClients(new JSONObject());
+            //Messaging.broadcastClients(new JSONObject());
             // Send appropriate response.
             // move client to mainHall.
             ServerState.getServerState().getRoom(ChatServerConstants.ServerConstants.MAIN_HALL).addClientIdentity(identity);
