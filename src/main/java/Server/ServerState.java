@@ -72,7 +72,7 @@ public class ServerState {
             this.currentLeader = new Leader("s1","localhost",5555);
 
         } catch (FileNotFoundException e) {
-            logger.debug("Exception occurred " + e);
+            logger.debug(e.getMessage());
         }
 
     }
