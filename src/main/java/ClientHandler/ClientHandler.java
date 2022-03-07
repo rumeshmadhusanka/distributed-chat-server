@@ -45,8 +45,8 @@ public class ClientHandler extends Thread{
                 logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
-        } catch (IOException | ParseException e) {
-            logger.debug("Exception occurred " + e);
+        } catch (IOException | ParseException | ServerException e) {
+            logger.info(e.getMessage());
         } finally {
             logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
