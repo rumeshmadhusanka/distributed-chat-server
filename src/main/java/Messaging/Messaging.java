@@ -75,8 +75,7 @@ public class Messaging {
                     serverResponses.put(server.getId(), jsonParseRequest(line));
                     socket.close();
                 } catch (Exception e) {
-                    logger.info("Connection failed for server: " + server.getAddress() + ":" + server.getPort());
-                    logger.debug(e.getMessage());
+                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort()+" msg: "+request.toJSONString());
                 }
             });
         }
@@ -107,8 +106,7 @@ public class Messaging {
                     sendRequest(request, socket);
                     socket.close();
                 } catch (Exception e) {
-                    logger.info("Connection failed for server: " + server.getAddress() + ":" + server.getPort());
-                    logger.debug(e.getMessage());
+                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort()+" msg: "+request.toJSONString());
                 }
             });
         }

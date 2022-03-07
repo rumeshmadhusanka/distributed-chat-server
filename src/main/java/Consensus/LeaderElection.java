@@ -1,7 +1,6 @@
 package Consensus;
 
 import Constants.ChatServerConstants.ServerConstants;
-import Constants.ServerProperties;
 import Messaging.Messaging;
 import Server.Server;
 import Server.ServerState;
@@ -9,7 +8,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -17,10 +19,13 @@ import java.util.stream.Collectors;
 public class LeaderElection {
     private static final Logger logger = LogManager.getLogger(LeaderElection.class);
     public static boolean electionStarter = false;
-    public static boolean electionFlag = false;
+    public static boolean electionFlag = false; // an election is running
     private static final Collection<String> okMessageIDList = new ArrayList<>();
     private static final Object lock = new Object();
     private static TimerTask timerTask = null;
+    private static Thread leaderElectionThread = null;
+
+    private enum electionState {NO_ELECTION, ELECTION_STARTED,}
 
     //No objects from LeaderElection class
     private LeaderElection() {
@@ -28,29 +33,66 @@ public class LeaderElection {
     }
 
     public static void startElection() {
+        if (electionFlag) {
+            logger.debug("An election process is already running");
+            return;
+        }
         electionStarter = true;
-        sendElectionStartMessage();
-        startOKMessageTimer();
+        electionFlag = true;
+        leaderElectionThread = new Thread(() -> {
+            ConcurrentHashMap<String, JSONObject> replies = sendElectionStartMessage();
+            if (replies.isEmpty()) {
+                // No one has responded; I am the leader
+                announceToTheWorld();
+                stopLeaderElection();
+            } else {
+                Collection<String> r = new ArrayList<>();
+                for (Iterator<String> it = replies.keys().asIterator(); it.hasNext(); ) {
+                    String s = it.next();
+                    r.add(s);
+                }
+                sendElectedMessage(r);
+            }
+        });
+        leaderElectionThread.setDaemon(true);
+        leaderElectionThread.setName("Leader-Election-Thread");
+        leaderElectionThread.start();
     }
 
-
-    private static void continueElection(){
-        if (okMessageIDList.isEmpty()) {
-            // I am the leader; Tell the world
-            announceToTheWorld();
+    public static void stopLeaderElection() {
+        logger.debug("Stopping leader election");
+        electionFlag = false;
+        electionStarter = true;
+        if (leaderElectionThread != null && leaderElectionThread.isAlive() && !leaderElectionThread.isInterrupted()) {
+            leaderElectionThread.interrupt();
         } else {
-            // Someone else has replied
-            sendElectedMessage(okMessageIDList);
-            endElection();
+            logger.debug("Leader election thread is either null, not alive or interrupted already");
         }
     }
+
+
+//    private static void continueElection(){
+//        if (okMessageIDList.isEmpty()) {
+//            // I am the leader; Tell the world
+//            announceToTheWorld();
+//        } else {
+//            // Someone else has replied
+//            sendElectedMessage(okMessageIDList);
+//        }
+//    }
 
     private static String getThisServerId() {
         return ServerState.getServerState().getServerId();
     }
 
-    private static Collection<Server> getAllServers() {
-        return ServerState.getServerState().getServers();
+    private static Collection<Server> getAllServersExceptMe() {
+        List<Server> allServersExcept = new ArrayList<>();
+        for (Server s : ServerState.getServerState().getServers()) {
+            if (!getThisServerId().equals(s.getId())) {
+                allServersExcept.add(s);
+            }
+        }
+        return allServersExcept;
     }
 
     /**
@@ -69,20 +111,20 @@ public class LeaderElection {
         return new JSONObject(message);
     }
 
-    private static void sendElectionStartMessage() {
+    private static ConcurrentHashMap<String, JSONObject> sendElectionStartMessage() {
         JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTION, getThisServerId());
-        Messaging.sendAndForget(message, ServerState.getServerState().getServers());
+        return Messaging.askServers(message, ServerState.getServerState().getServers());
     }
 
-    private static void startOKMessageTimer() {
-        timerTask = new java.util.TimerTask() {
-            @Override
-            public void run() {
-                continueElection();
-            }
-        };
-        new Timer(true).schedule(timerTask, ServerProperties.CONN_TIMEOUT);
-    }
+//    private static void startOKMessageTimer() {
+//        timerTask = new java.util.TimerTask() {
+//            @Override
+//            public void run() {
+//                continueElection();
+//            }
+//        };
+//        new Timer(true).schedule(timerTask, ServerProperties.CONN_TIMEOUT);
+//    }
 
     /**
      * Reply to an ELECTION message
@@ -90,14 +132,14 @@ public class LeaderElection {
      *
      * @param request JSON request
      */
-    public static void replyOK(JSONObject request) {
+    public static void replyOK(JSONObject request, Socket socket) throws IOException {
         String electionStarterId = (String) request.get(ServerConstants.SERVER_ID);
         JSONObject message = buildElectionJSON(ServerConstants.KIND_OK, getThisServerId());
         for (Server s : ServerState.getServerState().getServers()) {
             if (s.getId().equals(electionStarterId) &&
                     Integer.parseInt(getThisServerId()) > Integer.parseInt(electionStarterId)) {
-                logger.debug("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
-                Messaging.sendAndForget(new JSONObject(message), List.of(s));
+                logger.trace("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
+                Messaging.respond(message, socket);
                 return;
             }
         }
@@ -118,23 +160,22 @@ public class LeaderElection {
                 maxServerId = serverId;
             }
         }
-        if (maxServerId == Integer.parseInt(getThisServerId())) {
-            logger.error("Replied server has a lower id than the election starter. No one else has replied either. This should not happen");
-            logger.info("Electing self as the leader");
-            announceToTheWorld(); //TODO check this
-        } else {
-            JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTED, getThisServerId()); //sent by this server
-            int finalMaxServerId = maxServerId;
-            Server maxServer = getAllServers().stream().filter((Server s) -> s.getId().equals(Integer.toString(finalMaxServerId))).findFirst().orElse(null);
-            assert maxServer != null;
-            Messaging.sendAndForget(new JSONObject(message), List.of(maxServer));
-        }
+//        if (maxServerId == Integer.parseInt(getThisServerId())) {
+//            logger.error("Replied server has a lower id than the election starter. No one else has replied either. This should not happen");
+//            logger.info("Electing self as the leader");
+//            announceToTheWorld(); //TODO check this
+//        } else {
+        JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTED, getThisServerId()); //sent by this server
+        Server maxServer = ServerState.getServerState().getServerFromId(Integer.toString(maxServerId));
+        logger.trace("Max server: " + maxServer);
+        Messaging.sendAndForget(new JSONObject(message), List.of(maxServer));
+//        }
     }
 
     public static void receiveElectedMessage() {
         JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTED, getThisServerId()); //sent by this server
         Predicate<Server> higherServerPredicate = server -> Integer.parseInt(server.getId()) > Integer.parseInt(getThisServerId());
-        Collection<Server> higherServers = getAllServers().stream().filter(higherServerPredicate).collect(Collectors.toList());
+        Collection<Server> higherServers = getAllServersExceptMe().stream().filter(higherServerPredicate).collect(Collectors.toList());
         if (!higherServers.isEmpty()) {
             Messaging.sendAndForget(new JSONObject(message), higherServers);
         } else {
@@ -142,60 +183,60 @@ public class LeaderElection {
         }
     }
 
+    public static void respondToElectedMessage() {
+        announceToTheWorld();
+    }
+
     public static void announceToTheWorld() {
+        logger.trace("Announcing to the world by: " + getThisServerId());
         JSONObject message = buildElectionJSON(ServerConstants.KIND_COORDINATOR, getThisServerId());
-        Messaging.sendAndForget(new JSONObject(message), getAllServers());
+        Messaging.sendAndForget(new JSONObject(message), getAllServersExceptMe());
     }
 
     public static void receiveCoordinator(JSONObject request) {
         // Update the current leader.
         // The election process is complete.
         String newLeaderId = (String) request.get(ServerConstants.SERVER_ID);
-        List<Server> leader = getAllServers().stream().filter((Server s) -> s.getId().equals(newLeaderId)).collect(Collectors.toList());
-        assert !leader.isEmpty(); //TODO add new exception code?
-        ServerState.getServerState().setCurrentLeader((Leader) leader.get(0));//cast to Leader type
-        endElection();
+//        List<Server> leader = getAllServersExceptMe().stream().filter((Server s) -> s.getId().equals(newLeaderId)).collect(Collectors.toList());
+//        assert !leader.isEmpty(); //TODO add new exception code?
+//        ServerState.getServerState().setCurrentLeader(new Leader(leader.get(0)));//cast to Leader type
+        ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(newLeaderId)));
+        stopLeaderElection();
     }
 
-    private static void cancelOKTimer(){
-        if (timerTask != null){
-            timerTask.cancel();
-        }
-    }
+//    private static void cancelOKTimer(){
+//        if (timerTask != null){
+//            timerTask.cancel();
+//        }
+//    }
 
-    private static void endElection() {
-        clearOKMsgList();
-        electionFlag = false;
-        electionStarter = false;
-        cancelOKTimer();
-    }
 
-    /**
-     * Add a server ID to the ok message list
-     *
-     * @param request JSON request
-     */
-    public static void addToOKMsgList(JSONObject request) {
-        synchronized (lock) {
-            String serverId = (String) request.get(ServerConstants.SERVER_ID);
-            okMessageIDList.add(serverId);
+//    /**
+//     * Add a server ID to the ok message list
+//     *
+//     * @param request JSON request
+//     */
+//    public static void addToOKMsgList(JSONObject request) {
+//        synchronized (lock) {
+//            String serverId = (String) request.get(ServerConstants.SERVER_ID);
+//            okMessageIDList.add(serverId);
+//
+//            int higherServers = (int) getAllServersExceptMe().stream().filter((Server s)->Integer.parseInt(s.getId())>Integer.parseInt(getThisServerId())).count();
+//            if (okMessageIDList.size()==higherServers){
+//                cancelOKTimer();
+//                continueElection();
+//            }
+//        }
+//    }
 
-            int higherServers = (int) getAllServers().stream().filter((Server s)->Integer.parseInt(s.getId())>Integer.parseInt(getThisServerId())).count();
-            if (okMessageIDList.size()==higherServers){
-                cancelOKTimer();
-                continueElection();
-            }
-        }
-    }
-
-    /**
-     * Clear the OK message list after timeout
-     */
-    private static void clearOKMsgList() {
-        synchronized (lock) {
-            okMessageIDList.clear();
-        }
-    }
+//    /**
+//     * Clear the OK message list after timeout
+//     */
+//    private static void clearOKMsgList() {
+//        synchronized (lock) {
+//            okMessageIDList.clear();
+//        }
+//    }
 
 
 }

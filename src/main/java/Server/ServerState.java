@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Scanner;
@@ -31,7 +32,7 @@ public class ServerState {
 
     private static ServerState serverState;
 
-    private ServerState(){
+    private ServerState() {
     }
 
     public static ServerState getServerState() {
@@ -45,31 +46,49 @@ public class ServerState {
         return serverState;
     }
 
+    public static String getServerIdFromName(String serverName) {
+        // server name:  s1
+        // server id: 1
+        return serverName.substring(1);
+    }
+
     public void initialize(String serverId, String serverConf) {
+        serverId = getServerIdFromName(serverId);
         this.serverId = serverId;
-        try{
+        try {
             File conf = new File(serverConf);
             Scanner reader = new Scanner(conf);
-            while (reader.hasNextLine()){
+            while (reader.hasNextLine()) {
                 String line = reader.nextLine();
                 String[] params = line.split("\t");
-                if(params[0].equals(serverId)) {
+                params[0] = getServerIdFromName(params[0]);
+                if (params[0].equals(serverId)) {
                     this.serverAddress = params[1];
                     this.clientsPort = Integer.parseInt(params[2]);
                     this.coordinationPort = Integer.parseInt(params[3]);
-                }
-                else {
+                    logger.trace("Server created: " + serverId + " " + serverAddress + " " + clientsPort + " " + coordinationPort);
+                } else {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
                     serversHashmap.put(server.getId(), server);
                 }
             }
             //TODO remove hardcoded Leader value
-            this.currentLeader = new Leader("s1","localhost",5555);
+            this.currentLeader = new Leader("1", "0.0.0.0", 5555);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public Server getServerFromId(String serverId) {
+        Collection<Server> servers = getServers();
+        for (Server s : servers) {
+            if (s.getId().equals(serverId)) {
+                return s;
+            }
+        }
+        return null;
     }
 
     public String getServerId() {
@@ -106,15 +125,17 @@ public class ServerState {
     }
 
     public String getRoomByOwner(String owner) {
-        for (Map.Entry<String, Room> mapEntry: roomsHashMap.entrySet()) {
-            if(owner.equals(mapEntry.getValue().getOwner())){
+        for (Map.Entry<String, Room> mapEntry : roomsHashMap.entrySet()) {
+            if (owner.equals(mapEntry.getValue().getOwner())) {
                 return mapEntry.getValue().getRoomId();
             }
         }
         return null;
     }
 
-    public void removeRoom(Room room) {roomsHashMap.remove(room.getRoomId());}
+    public void removeRoom(Room room) {
+        roomsHashMap.remove(room.getRoomId());
+    }
 
     public Leader getCurrentLeader() {
         return currentLeader;
@@ -124,7 +145,7 @@ public class ServerState {
         this.currentLeader = currentLeader;
     }
 
-    public void addIdentity(String identity){
+    public void addIdentity(String identity) {
         this.identityList.add(identity);
     }
 
