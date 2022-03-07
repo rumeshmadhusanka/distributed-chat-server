@@ -51,6 +51,7 @@ public class ClientHandler extends Thread{
             logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
     }
+
     /**
      * Resolve a given request.
      *
