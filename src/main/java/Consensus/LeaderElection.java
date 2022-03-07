@@ -81,7 +81,7 @@ public class LeaderElection {
                 continueElection();
             }
         };
-        new java.util.Timer().schedule(timerTask, ServerProperties.CONN_TIMEOUT);
+        new Timer(true).schedule(timerTask, ServerProperties.CONN_TIMEOUT);
     }
 
     /**
