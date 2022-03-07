@@ -29,6 +29,11 @@ public class Server implements Comparable<Server> {
     }
 
     @Override
+    public String toString() {
+        return "Server:" + id + " " + address + " " + port + " ";
+    }
+
+    @Override
     public int compareTo(Server server) {
         if (Integer.parseInt(this.getId()) == Integer.parseInt(server.getId())) {
             return 0;

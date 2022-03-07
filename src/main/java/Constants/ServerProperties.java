@@ -9,9 +9,11 @@ import java.util.Properties;
 public class ServerProperties {
     public static long CONN_TIMEOUT;
     public static int THREAD_COUNT;
+    public static final String LOCAL_ADDRESS = "0.0.0.0";
 
 
     private static final Logger logger = LogManager.getLogger(ServerProperties.class);
+
     public static void init() {
         try {
             Properties prop = new Properties();
