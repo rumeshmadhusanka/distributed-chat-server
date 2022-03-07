@@ -1,9 +1,12 @@
 package Server;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class Room {
-    private String roomId;
-    private String owner;
-    private String serverId;
+    private final String roomId;
+    private final String owner;
+    private final String serverId;
+    private ConcurrentLinkedQueue<String> clientIdentity;
 
     public Room(String serverId, String roomId) {
         this.serverId = serverId;
@@ -24,4 +27,12 @@ public class Room {
     public String getOwner() {return owner;}
 
     public String getServerId() {return serverId;}
+
+    public ConcurrentLinkedQueue<String> getClientIdentity() {
+        return clientIdentity;
+    }
+
+    public void addClientIdentity(String identity) {
+        this.clientIdentity.add(identity);
+    }
 }
