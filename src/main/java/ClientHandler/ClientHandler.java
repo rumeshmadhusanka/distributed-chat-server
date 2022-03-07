@@ -102,7 +102,7 @@ public class ClientHandler extends Thread{
 
             }
         } catch (IOException | ServerException | ParseException e) {
-            logger.info(e.getMessage());
+            throw e;
         }
     }
 
