@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import Constants.ServerProperties;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -54,6 +55,22 @@ public class Messaging {
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
+    }
+
+
+    public static void broadcastToPreviousRoom(){
+        //TODO: Implement the broadcasting to previous server
+    }
+
+    public static void broadcastServers(JSONObject obj) throws IOException {
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        for (Server server : servers) {
+            Socket socket = new Socket(server.getAddress(), server.getPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
+            socket.close();
+        }
     }
 
     /**
