@@ -51,7 +51,11 @@ public class ClientHandler extends Thread{
             logger.info("Connection has ended for client: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
     }
-
+    /**
+     * Resolve a given request.
+     *
+     * @param jsonPayload -  Request as a JSONObject.
+     */
     public void resolveClientRequest(JSONObject jsonPayload) {
         String type = (String) jsonPayload.get("type");
         JSONObject response;
