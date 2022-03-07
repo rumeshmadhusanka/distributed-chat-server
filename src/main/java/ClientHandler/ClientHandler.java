@@ -97,12 +97,8 @@ public class ClientHandler extends Thread{
                 case ClientConstants.TYPE_WHO:
 
             }
-        } catch (IOException e) {
+        } catch (IOException | ServerException | ParseException e) {
             logger.info(e.getMessage());
-        } catch (ServerException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
     }
 

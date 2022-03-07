@@ -38,7 +38,9 @@ public class ServerState {
     public static ServerState getServerState() {
         if (serverState == null) {
             synchronized (ServerState.class) {
-                serverState = new ServerState();
+                if (serverState == null) {
+                    serverState = new ServerState();
+                }
             }
         }
         return serverState;

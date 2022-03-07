@@ -1,12 +1,12 @@
 package Server;
 
-import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Room {
     private final String roomId;
     private final String owner;
     private final String serverId;
-    private ArrayList<String> clientIdentity;
+    private ConcurrentLinkedQueue<String> clientIdentity;
 
     public Room(String serverId, String roomId) {
         this.serverId = serverId;
@@ -28,7 +28,7 @@ public class Room {
 
     public String getServerId() {return serverId;}
 
-    public ArrayList<String> getClientIdentity() {
+    public ConcurrentLinkedQueue<String> getClientIdentity() {
         return clientIdentity;
     }
 
