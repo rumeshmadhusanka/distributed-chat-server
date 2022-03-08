@@ -23,7 +23,6 @@ public class Main {
         // Initialize server state.
         logger.info("Server Id: " + args[0] + "Conf file path:" + args[1]);
         ServerState.getServerState().initialize(args[0], args[1]);
-        ServerState.getServerState().addRoomToMap(new Room(args[0],ServerConstants.MAIN_HALL+"-"+args[0]));
 
         //initialize server properties
         ServerProperties.init();

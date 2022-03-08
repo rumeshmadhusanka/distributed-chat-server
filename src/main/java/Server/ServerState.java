@@ -2,6 +2,7 @@ package Server;
 
 import ClientHandler.ClientHandler;
 import Consensus.Leader;
+import Constants.ChatServerConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,12 +72,16 @@ public class ServerState {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
                     serversHashmap.put(server.getId(), server);
                 }
+                addRoomToMap(new Room(serverId,ChatServerConstants.ServerConstants.MAIN_HALL+"-"+serverId));
             }
+            //create main hall chatroom
+
+
             //TODO remove hardcoded Leader value
             this.currentLeader = new Leader("1", "0.0.0.0", 5555);
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage());
         }
 
     }
@@ -93,6 +98,14 @@ public class ServerState {
 
     public String getServerId() {
         return serverId;
+    }
+
+    public ConcurrentHashMap<String, Room> getRoomsHashMap() {
+        return roomsHashMap;
+    }
+
+    public Room getRoom(String roomId){
+        return roomsHashMap.get(roomId);
     }
 
     public String getServerAddress() {
