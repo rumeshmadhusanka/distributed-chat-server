@@ -44,6 +44,7 @@ public class LeaderElection {
             if (replies.isEmpty()) {
                 // No one has responded; I am the leader
                 announceToTheWorld();
+                ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(getThisServerId())));
                 stopLeaderElection();
             } else {
                 Collection<String> r = new ArrayList<>();
@@ -68,6 +69,7 @@ public class LeaderElection {
         } else {
             logger.debug("Leader election thread is either null, not alive or interrupted already");
         }
+        logger.debug("Elected Leader: " + ServerState.getServerState().getCurrentLeader());
     }
 
 
@@ -143,7 +145,6 @@ public class LeaderElection {
                 return;
             }
         }
-        logger.error("This line should never reached; OK message sent by a non existing server");
     }
 
 

@@ -8,10 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -27,7 +24,7 @@ public class ServerState {
 
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive
+    private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
     private Leader currentLeader = null;
 
@@ -72,7 +69,7 @@ public class ServerState {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
                     serversHashmap.put(server.getId(), server);
                 }
-                addRoomToMap(new Room(serverId,ChatServerConstants.ServerConstants.MAIN_HALL+"-"+serverId));
+                addRoomToMap(new Room(serverId, ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId));
             }
             //create main hall chatroom
 
@@ -87,11 +84,17 @@ public class ServerState {
     }
 
     public Server getServerFromId(String serverId) {
+        logger.trace(serverId);
         Collection<Server> servers = getServers();
         for (Server s : servers) {
+            logger.trace(s.toString() + " " + s.getId() + " " + serverId);
             if (s.getId().equals(serverId)) {
+                logger.trace("EQUAL");
                 return s;
             }
+        }
+        if (serverId.equals(this.serverId)) {
+            return new Server(this.serverId, this.serverAddress, this.coordinationPort); //todo check coordination port or clients port
         }
         return null;
     }
@@ -104,7 +107,7 @@ public class ServerState {
         return roomsHashMap;
     }
 
-    public Room getRoom(String roomId){
+    public Room getRoom(String roomId) {
         return roomsHashMap.get(roomId);
     }
 
