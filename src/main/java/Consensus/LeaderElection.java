@@ -87,15 +87,15 @@ public class LeaderElection {
         return ServerState.getServerState().getServerId();
     }
 
-    private static Collection<Server> getAllServersExceptMe() {
-        List<Server> allServersExcept = new ArrayList<>();
-        for (Server s : ServerState.getServerState().getServers()) {
-            if (!getThisServerId().equals(s.getId())) {
-                allServersExcept.add(s);
-            }
-        }
-        return allServersExcept;
-    }
+//    private static Collection<Server> getAllServersExceptMe() {
+//        List<Server> allServersExcept = new ArrayList<>();
+//        for (Server s : ) {
+//            if (!getThisServerId().equals(s.getId())) {
+//                allServersExcept.add(s);
+//            }
+//        }
+//        return allServersExcept;
+//    }
 
     /**
      * Bully messages have the same format. type, kind, and serverId
@@ -176,7 +176,7 @@ public class LeaderElection {
     public static void receiveElectedMessage() {
         JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTED, getThisServerId()); //sent by this server
         Predicate<Server> higherServerPredicate = server -> Integer.parseInt(server.getId()) > Integer.parseInt(getThisServerId());
-        Collection<Server> higherServers = getAllServersExceptMe().stream().filter(higherServerPredicate).collect(Collectors.toList());
+        Collection<Server> higherServers = ServerState.getServerState().getServers().stream().filter(higherServerPredicate).collect(Collectors.toList());
         if (!higherServers.isEmpty()) {
             Messaging.sendAndForget(new JSONObject(message), higherServers);
         } else {
@@ -191,7 +191,7 @@ public class LeaderElection {
     public static void announceToTheWorld() {
         logger.trace("Announcing to the world by: " + getThisServerId());
         JSONObject message = buildElectionJSON(ServerConstants.KIND_COORDINATOR, getThisServerId());
-        Messaging.sendAndForget(new JSONObject(message), getAllServersExceptMe());
+        Messaging.sendAndForget(new JSONObject(message), ServerState.getServerState().getServers());
     }
 
     public static void receiveCoordinator(JSONObject request) {
