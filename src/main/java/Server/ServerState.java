@@ -84,12 +84,9 @@ public class ServerState {
     }
 
     public Server getServerFromId(String serverId) {
-        logger.trace(serverId);
         Collection<Server> servers = getServers();
         for (Server s : servers) {
-            logger.trace(s.toString() + " " + s.getId() + " " + serverId);
             if (s.getId().equals(serverId)) {
-                logger.trace("EQUAL");
                 return s;
             }
         }
