@@ -76,6 +76,9 @@ public class ChatServerConstants {
 
         public static final String LEADER_FAILED_MSG = "Leader failed.";
         public static final String LEADER_FAILED_CODE = "SE-02";
+
+        public static final String INTERNAL_SERVER_ERROR_MSG = "Internal server error.";
+        public static final String INTERNAL_SERVER_ERROR_CODE = "SE-03";
     }
 
 }

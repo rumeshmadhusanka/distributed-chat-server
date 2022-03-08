@@ -4,6 +4,7 @@ import ClientHandler.ClientHandler;
 import Consensus.Consensus;
 import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
+import Constants.ChatServerConstants.ServerExceptionConstants;
 import Exception.ServerException;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
@@ -61,32 +62,11 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_CONSENSUS:
                 switch (kind) {
                     case ServerConstants.KIND_VERIFY_UNIQUE:
-                        String value;
-                        String valueType;
-                        if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
-                            value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
-                            valueType = ServerConstants.IDENTITY;
-                        } else {
-                            value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
-                            valueType = ServerConstants.ROOM_ID;
-                        }
-
-                        boolean isAvailable = Consensus.verifyUniqueValue(value, valueType);
-                        HashMap<String, String> responseMap = new HashMap<>();
-                        responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
-                        responseMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
-                        responseMap.put(valueType, value);
-                        responseMap.put(ServerConstants.UNIQUE, String.valueOf(isAvailable));
-                        Messaging.respond(new JSONObject(responseMap), serverSocket);
+                        verifyUnique(jsonPayload);
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
-                        String identity = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
-                        boolean isIdAvail = Consensus.verifyUniqueValue(identity, ServerConstants.IDENTITY);
-                        // TODO: Respond
-
+                        handleRequestToCreate(jsonPayload, ServerConstants.IDENTITY);
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
-                        String roomId = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
-                        boolean isRoomAvail = Consensus.verifyUniqueValue(roomId, ServerConstants.IDENTITY);
-                        // TODO: Respond
+                        handleRequestToCreate(jsonPayload, ServerConstants.ROOM_ID);
                 }
             case ServerConstants.TYPE_GOSSIP:
                 switch (kind) {
@@ -120,5 +100,68 @@ public class ServerHandler extends Thread {
                         LeaderElection.receiveCoordinator(jsonPayload);
                 }
         }
+    }
+
+    private void verifyUnique(JSONObject jsonPayload) throws IOException, ServerException, ParseException {
+        String value;
+        String valueType;
+        if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
+            value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
+            valueType = ServerConstants.IDENTITY;
+        } else {
+            value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
+            valueType = ServerConstants.ROOM_ID;
+        }
+
+        boolean isAvailable = Consensus.verifyUniqueValue(value, valueType);
+        HashMap<String, String> responseMap = new HashMap<>();
+        responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
+        responseMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
+        responseMap.put(valueType, value);
+        responseMap.put(ServerConstants.UNIQUE, String.valueOf(isAvailable));
+        Messaging.respond(new JSONObject(responseMap), serverSocket);
+    }
+
+    private void handleRequestToCreate(JSONObject jsonPayload, String type) throws ServerException, IOException, ParseException {
+        boolean isAvailable;
+        JSONObject response = null;
+        switch (type) {
+            case ServerConstants.IDENTITY:
+                String identity = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
+                isAvailable = Consensus.verifyUniqueValue(identity, ServerConstants.IDENTITY);
+                response = createRequestKindJSON(isAvailable, identity,
+                        ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY);
+                break;
+            case ServerConstants.ROOM_ID:
+                String roomId = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
+                isAvailable = Consensus.verifyUniqueValue(roomId, ServerConstants.ROOM_ID);
+                response = createRequestKindJSON(isAvailable, roomId,
+                        ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM);
+        }
+        if (response != null) {
+            Messaging.respond(response, serverSocket);
+        } else {
+            throw new ServerException(
+                    ServerExceptionConstants.INTERNAL_SERVER_ERROR_MSG,
+                    ServerExceptionConstants.INTERNAL_SERVER_ERROR_CODE);
+        }
+
+
+    }
+
+    private JSONObject createRequestKindJSON(boolean isAvailable, String value, String type) {
+        HashMap<String, String> responseMap = new HashMap<>();
+        responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
+        responseMap.put(ServerConstants.SUCCESS, String.valueOf(isAvailable));
+        switch (type) {
+            case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
+                responseMap.put(ServerConstants.KIND, ServerConstants.KIND_REPLY_TO_CREATE_NEW_IDENTITY);
+                responseMap.put(ServerConstants.IDENTITY, value);
+                break;
+            case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
+                responseMap.put(ServerConstants.KIND, ServerConstants.KIND_REPLY_TO_CREATE_NEW_ROOM);
+                responseMap.put(ServerConstants.ROOM_ID, value);
+        }
+        return new JSONObject(responseMap);
     }
 }
