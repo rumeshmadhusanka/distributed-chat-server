@@ -37,6 +37,6 @@ jobs:
       - name: Print the sever log
         if: always()
         run: |
-          sleep 30
+          sleep 60
           cat server-log.txt
 
