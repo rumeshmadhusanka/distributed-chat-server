@@ -37,7 +37,6 @@ public class LeaderElection {
             logger.debug("An election process is already running");
             return;
         }
-        electionStarter = true;
         electionFlag = true;
         leaderElectionThread = new Thread(() -> {
             ConcurrentHashMap<String, JSONObject> replies = sendElectionStartMessage();
@@ -45,13 +44,16 @@ public class LeaderElection {
                 // No one has responded; I am the leader
                 announceToTheWorld();
                 ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(getThisServerId())));
+                logger.trace("No one responded to: "+getThisServerId());
                 stopLeaderElection();
             } else {
                 Collection<String> r = new ArrayList<>();
+
                 for (Iterator<String> it = replies.keys().asIterator(); it.hasNext(); ) {
                     String s = it.next();
                     r.add(s);
                 }
+                logger.trace("Responded OK to: "+getThisServerId()+" by: "+r);
                 sendElectedMessage(r);
             }
         });
@@ -63,12 +65,12 @@ public class LeaderElection {
     public static void stopLeaderElection() {
         logger.debug("Stopping leader election");
         electionFlag = false;
-        electionStarter = true;
         if (leaderElectionThread != null && leaderElectionThread.isAlive() && !leaderElectionThread.isInterrupted()) {
             leaderElectionThread.interrupt();
-        } else {
-            logger.debug("Leader election thread is either null, not alive or interrupted already");
         }
+//        else {
+//            logger.debug("Leader election thread is either null, not alive or interrupted already");
+//        }
         logger.debug("Elected Leader: " + ServerState.getServerState().getCurrentLeader());
     }
 
@@ -135,16 +137,16 @@ public class LeaderElection {
      * @param request JSON request
      */
     public static void replyOK(JSONObject request, Socket socket) throws IOException {
+        electionFlag = true;
+
         String electionStarterId = (String) request.get(ServerConstants.SERVER_ID);
         JSONObject message = buildElectionJSON(ServerConstants.KIND_OK, getThisServerId());
-        for (Server s : ServerState.getServerState().getServers()) {
-            if (s.getId().equals(electionStarterId) &&
-                    Integer.parseInt(getThisServerId()) > Integer.parseInt(electionStarterId)) {
-                logger.trace("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
-                Messaging.respond(message, socket);
-                return;
-            }
+//        for (Server s : ServerState.getServerState().getServers()) {
+        if (Integer.parseInt(getThisServerId()) > Integer.parseInt(electionStarterId)) {
+            logger.trace("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
+            Messaging.respond(message, socket);
         }
+//        }
     }
 
 
@@ -201,8 +203,13 @@ public class LeaderElection {
 //        List<Server> leader = getAllServersExceptMe().stream().filter((Server s) -> s.getId().equals(newLeaderId)).collect(Collectors.toList());
 //        assert !leader.isEmpty(); //TODO add new exception code?
 //        ServerState.getServerState().setCurrentLeader(new Leader(leader.get(0)));//cast to Leader type
+//        if (Integer.parseInt(newLeaderId) < Integer.parseInt(getThisServerId())) {
+//            startElection();
+//            return;
+//        }
         ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(newLeaderId)));
         stopLeaderElection();
+
     }
 
 //    private static void cancelOKTimer(){
