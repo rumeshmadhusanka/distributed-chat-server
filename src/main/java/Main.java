@@ -1,4 +1,5 @@
 import ClientHandler.ClientHandler;
+import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ServerProperties;
 import Server.Room;
@@ -17,6 +18,7 @@ public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException {
+        //TODO Every server socket should bind to the 0.0.0.0 when deploying to GCP/AWS. Other server's external ips should be stored in Server objects
 
         // Initialize server state.
         logger.info("Server Id: " + args[0] + "Conf file path:" + args[1]);
@@ -27,7 +29,7 @@ public class Main {
         // ServerSocket for coordination.
         ServerSocket serverCoordinationSocket = new ServerSocket();
         SocketAddress coordinationEndpoint = new InetSocketAddress(
-                ServerState.getServerState().getServerAddress(),
+                ServerProperties.LOCAL_ADDRESS,
                 ServerState.getServerState().getCoordinationPort());
         serverCoordinationSocket.bind(coordinationEndpoint);
         logger.debug("Local Coordination Socket Address: " +serverCoordinationSocket.getLocalSocketAddress());
@@ -53,12 +55,15 @@ public class Main {
         // ServerSocket for client communication.
         ServerSocket serverClientSocket = new ServerSocket();
         SocketAddress clientEndpoint = new InetSocketAddress(
-                ServerState.getServerState().getServerAddress(),
+                ServerProperties.LOCAL_ADDRESS,
                 ServerState.getServerState().getClientsPort());
+
         serverClientSocket.bind(clientEndpoint);
         logger.debug("Local Client Socket Address: " +serverClientSocket.getLocalSocketAddress());
         logger.info("Waiting for clients on port "+ serverClientSocket.getLocalPort());
 
+        //Todo remove
+        LeaderElection.startElection();
         // Start ClientHandler.
         while (true) {
             Socket clientSocket = serverClientSocket.accept();

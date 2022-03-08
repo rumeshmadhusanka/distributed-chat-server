@@ -2,6 +2,7 @@ package Server;
 
 import ClientHandler.ClientHandler;
 import Consensus.Consensus;
+import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Exception.ServerException;
 import Messaging.Messaging;
@@ -101,13 +102,22 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_BULLY:
                 switch (kind) {
                     case ServerConstants.KIND_ELECTION:
-                        // TODO:
-                    case ServerConstants.KIND_OK:
-                        // TODO:
+                        // This server received an ELECTION message
+                        logger.trace("Received bully to: " + ServerState.getServerState().getServerId());
+                        LeaderElection.replyOK(jsonPayload, serverSocket);
+//                    case ServerConstants.KIND_OK:
+//                        // This server received an OK message
+//                        // This server must be the election starter; TODO handle exception if not
+//                        // Add the ok message sender to the ok message list
+//                        logger.trace("Received OK to: " + ServerState.getServerState().getServerId());
                     case ServerConstants.KIND_ELECTED:
-                        // TODO:
+                        // This server received elected message
+                        // TODO
+                        logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId());
+                        LeaderElection.respondToElectedMessage();
                     case ServerConstants.KIND_COORDINATOR:
-                        // TODO:
+                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId());
+                        LeaderElection.receiveCoordinator(jsonPayload);
                 }
         }
     }
