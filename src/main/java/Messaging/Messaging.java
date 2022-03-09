@@ -52,6 +52,7 @@ public class Messaging {
      * @throws IOException
      */
     public static void respond(JSONObject obj, Socket socket) throws IOException {
+        logger.debug("Sending: " + obj.toJSONString());
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
@@ -164,7 +165,6 @@ public class Messaging {
         InputStream inputFromClient = socket.getInputStream();
         Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
         String line = serverInputScanner.nextLine();
-        logger.debug("Received: " + line);
         return line;
     }
 }

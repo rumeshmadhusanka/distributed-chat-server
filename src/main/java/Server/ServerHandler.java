@@ -63,11 +63,15 @@ public class ServerHandler extends Thread {
                 switch (kind) {
                     case ServerConstants.KIND_VERIFY_UNIQUE:
                         verifyUnique(jsonPayload);
+                        break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
                         handleRequestToCreate(jsonPayload, ServerConstants.IDENTITY);
+                        break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
                         handleRequestToCreate(jsonPayload, ServerConstants.ROOM_ID);
+                        break;
                 }
+                break;
             case ServerConstants.TYPE_GOSSIP:
                 switch (kind) {
                     case ServerConstants.KIND_INFORM_NEW_IDENTITY:
@@ -79,6 +83,7 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
                         // TODO: Inform servers
                 }
+                break;
             case ServerConstants.TYPE_BULLY:
                 switch (kind) {
                     case ServerConstants.KIND_ELECTION:
@@ -102,18 +107,21 @@ public class ServerHandler extends Thread {
         }
     }
 
-    private void verifyUnique(JSONObject jsonPayload) throws IOException, ServerException, ParseException {
+    private void verifyUnique(JSONObject jsonPayload) throws IOException{
         String value;
         String valueType;
+        boolean isAvailable;
+        // Find the verifyUnique type and query ServerState.
         if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
             value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
             valueType = ServerConstants.IDENTITY;
+            isAvailable = !ServerState.getServerState().hasIdentity(value);
         } else {
             value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
             valueType = ServerConstants.ROOM_ID;
+            isAvailable = !ServerState.getServerState().hasRoomId(value);
         }
 
-        boolean isAvailable = Consensus.verifyUniqueValue(value, valueType);
         HashMap<String, String> responseMap = new HashMap<>();
         responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
         responseMap.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);

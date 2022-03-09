@@ -62,8 +62,6 @@ public class Main {
         logger.debug("Local Client Socket Address: " +serverClientSocket.getLocalSocketAddress());
         logger.info("Waiting for clients on port "+ serverClientSocket.getLocalPort());
 
-        //Todo remove
-        LeaderElection.startElection();
         // Start ClientHandler.
         while (true) {
             Socket clientSocket = serverClientSocket.accept();

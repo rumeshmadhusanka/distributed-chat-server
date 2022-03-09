@@ -67,6 +67,8 @@ public class ChatServerConstants {
 
         public static final String IDENTITY = "identity";
         public static final String ROOM_ID = "roomid";
+        public static final String CHANGE_ROOM = "roomchange";
+        public static final String FORMER_ROOM = "former";
 
     }
 

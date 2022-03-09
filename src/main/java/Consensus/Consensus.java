@@ -27,6 +27,8 @@ public class Consensus {
      */
     private static boolean isLeader() {
         Leader leader = ServerState.getServerState().getCurrentLeader();
+        logger.debug("Leader id: " + leader.getId());
+        logger.debug("My id: " + ServerState.getServerState().getServerId());
         return ServerState.getServerState().getServerId().equals(leader.getId());
     }
 
@@ -40,6 +42,7 @@ public class Consensus {
         boolean isUnique = true;
         HashMap<String, String> request;
         if (isLeader()) {
+            logger.debug("Taking 'Is the leader path'.");
             // build the request
             request = createRequestMap();
             request.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
@@ -52,15 +55,16 @@ public class Consensus {
             }
             Collection<Server> servers = ServerState.getServerState().getServers();
             ConcurrentHashMap<String, JSONObject> responses = Messaging.askServers(new JSONObject(request), servers);
-
+            logger.debug("Response object for Ask Servers:" + (responses.values()));
             for (JSONObject response : responses.values()) {
-                if (Boolean.parseBoolean((String) response.get("unique"))) {
+                if (!Boolean.parseBoolean((String) response.get("unique"))) {
                     isUnique = false;
                     break;
                 }
             }
         } else {
             try {
+                logger.debug("Taking 'Not the leader path'.");
                 // Get current leader.
                 Leader currentLeader = ServerState.getServerState().getCurrentLeader();
 
@@ -100,10 +104,10 @@ public class Consensus {
                 if (err.getCode().equals(ServerExceptionConstants.LEADER_FAILED_CODE) ||
                         err.getCode().equals(ServerExceptionConstants.NO_LEADER_CODE)) {
                     logger.info("Leader either doesn't exist or failed. Starting Leader Election Process.");
-                    LeaderElection.startElection();
+//                    LeaderElection.startElection();
                     // TODO: Need to set an exit block the recursion. Take num of attempts into consideration.
                     logger.info("Restarting verification process. Attempt: ");
-                    verifyUniqueValue(value, askType);
+//                    verifyUniqueValue(value, askType);
                 } else {
                     throw err;
                 }
