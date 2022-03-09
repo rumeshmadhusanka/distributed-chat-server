@@ -3,15 +3,14 @@ package Messaging;
 import Consensus.Leader;
 import Constants.ChatServerConstants;
 import Constants.ServerProperties;
+import Exception.ServerException;
 import Server.Server;
 import Server.ServerState;
-import Exception.ServerException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import Constants.ServerProperties;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -58,22 +57,6 @@ public class Messaging {
         dataOutputStream.flush();
     }
 
-
-    public static void broadcastToPreviousRoom(){
-        //TODO: Implement the broadcasting to previous server
-    }
-
-    public static void broadcastServers(JSONObject obj) throws IOException {
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        for (Server server : servers) {
-            Socket socket = new Socket(server.getAddress(), server.getPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-            socket.close();
-        }
-    }
-
     /**
      * Only executed by the leader.
      * Asks something from each server in the servers Collection, then get a reply.
@@ -93,7 +76,7 @@ public class Messaging {
                     serverResponses.put(server.getId(), jsonParseRequest(line));
                     socket.close();
                 } catch (Exception e) {
-                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort()+" msg: "+request.toJSONString());
+                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort() + " msg: " + request.toJSONString());
                 }
             });
         }
@@ -112,6 +95,7 @@ public class Messaging {
 
     /**
      * Send and forget a message. Unidirectional; Doesn't wait for the other party to respond.
+     *
      * @param request JSON request to send
      * @param servers Collection of servers to send the message
      */
@@ -124,7 +108,7 @@ public class Messaging {
                     sendRequest(request, socket);
                     socket.close();
                 } catch (Exception e) {
-                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort()+" msg: "+request.toJSONString());
+                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort() + " msg: " + request.toJSONString());
                 }
             });
         }
@@ -148,7 +132,7 @@ public class Messaging {
             String line = sendRequest(request, socket);
             socket.close();
             return jsonParseRequest(line);
-        } catch (SocketTimeoutException e){
+        } catch (SocketTimeoutException e) {
             // Throw an error if connection to leader fails.
             logger.info("Connection to leader timed out.");
             throw new ServerException(
@@ -158,6 +142,7 @@ public class Messaging {
     }
 
     private static String sendRequest(JSONObject request, Socket socket) throws IOException {
+        logger.debug("Sending request: " + request.toJSONString());
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
@@ -165,6 +150,7 @@ public class Messaging {
         InputStream inputFromClient = socket.getInputStream();
         Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
         String line = serverInputScanner.nextLine();
+        logger.debug("Received -: " + line);
         return line;
     }
 }

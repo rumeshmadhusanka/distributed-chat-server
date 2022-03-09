@@ -28,7 +28,7 @@ public class Consensus {
     private static boolean isLeader() {
         Leader leader = ServerState.getServerState().getCurrentLeader();
         logger.debug("Leader id: " + leader.getId());
-        logger.debug("My id: " + ServerState.getServerState().getServerId());
+        logger.debug("Self id: " + ServerState.getServerState().getServerId());
         return ServerState.getServerState().getServerId().equals(leader.getId());
     }
 
@@ -90,13 +90,14 @@ public class Consensus {
                 request.put(ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
 
                 // Contact leader for verification.
+                logger.debug("Contacting Leader for verification");
                 JSONObject response = Messaging.contactLeader(new JSONObject(request), currentLeader);
 
                 // Return response received from the leader.
                 String responseKind = (String) response.get(ServerConstants.KIND);
-                if(responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_IDENTITY) ||
-                        responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_ROOM)){
-                    isUnique =  Boolean.parseBoolean((String) response.get(ServerConstants.SUCCESS));
+                if (responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_IDENTITY) ||
+                        responseKind.equals(ServerConstants.KIND_REPLY_TO_CREATE_NEW_ROOM)) {
+                    isUnique = Boolean.parseBoolean((String) response.get(ServerConstants.SUCCESS));
                 }
 
             } catch (ServerException err) {
