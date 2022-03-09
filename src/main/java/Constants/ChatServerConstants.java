@@ -67,6 +67,8 @@ public class ChatServerConstants {
 
         public static final String IDENTITY = "identity";
         public static final String ROOM_ID = "roomid";
+        public static final String CHANGE_ROOM = "roomchange";
+        public static final String FORMER_ROOM = "former";
 
     }
 
@@ -76,6 +78,9 @@ public class ChatServerConstants {
 
         public static final String LEADER_FAILED_MSG = "Leader failed.";
         public static final String LEADER_FAILED_CODE = "SE-02";
+
+        public static final String INTERNAL_SERVER_ERROR_MSG = "Internal server error.";
+        public static final String INTERNAL_SERVER_ERROR_CODE = "SE-03";
     }
 
 }

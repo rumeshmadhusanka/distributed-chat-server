@@ -108,6 +108,10 @@ public class ServerState {
         return roomsHashMap.get(roomId);
     }
 
+    public Room getMainHall() {
+        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId);
+    }
+
     public String getServerAddress() {
         return serverAddress;
     }
@@ -150,6 +154,10 @@ public class ServerState {
         roomsHashMap.remove(room.getRoomId());
     }
 
+    public boolean hasRoomId(String identity){
+        return roomsHashMap.containsKey(identity);
+    }
+
     public Leader getCurrentLeader() {
         return currentLeader;
     }
@@ -164,5 +172,9 @@ public class ServerState {
 
     public ConcurrentLinkedQueue<String> getIdentityList() {
         return identityList;
+    }
+
+    public boolean hasIdentity(String identity){
+        return identityList.contains(identity);
     }
 }

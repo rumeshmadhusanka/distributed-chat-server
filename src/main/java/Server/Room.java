@@ -1,12 +1,14 @@
 package Server;
 
+import Constants.ChatServerConstants;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Room {
     private final String roomId;
     private final String owner;
     private final String serverId;
-    private ConcurrentLinkedQueue<String> clientIdentity;
+    private final ConcurrentLinkedQueue<String> clientIdentity = new ConcurrentLinkedQueue<>();
 
     public Room(String serverId, String roomId) {
         this.serverId = serverId;
@@ -34,5 +36,12 @@ public class Room {
 
     public void addClientIdentity(String identity) {
         this.clientIdentity.add(identity);
+    }
+
+    public boolean isMainHall() {
+        if (this.roomId.equals(ChatServerConstants.ServerConstants.MAIN_HALL+"-"+this.serverId)){
+            return true;
+        }
+        return false;
     }
 }

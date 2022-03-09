@@ -76,8 +76,6 @@ public class Main {
 //        new Timer(true).schedule(timerTask, 0, 1000);
 
 
-        //Todo remove
-        LeaderElection.startElection();
         // Start ClientHandler.
         while (true) {
             Socket clientSocket = serverClientSocket.accept();
