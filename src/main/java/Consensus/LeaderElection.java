@@ -34,8 +34,8 @@ public class LeaderElection {
         leaderElectionThread = new Thread(() -> {
             ConcurrentHashMap<String, JSONObject> replies = sendElectionStartMessage();
             Collection<String> okReplies = new ArrayList<>();
-            for (Map.Entry<String,JSONObject> mapEntry: replies.entrySet() ) {
-                if (!replies.isEmpty() && mapEntry.getValue().get(ServerConstants.KIND).equals(ServerConstants.KIND_OK)){
+            for (Map.Entry<String, JSONObject> mapEntry : replies.entrySet()) {
+                if (!replies.isEmpty() && mapEntry.getValue().get(ServerConstants.KIND).equals(ServerConstants.KIND_OK)) {
                     okReplies.add(mapEntry.getKey());
                     logger.trace("Responded OK to: " + getThisServerId() + " by: " + mapEntry.getKey());
                 }
@@ -166,10 +166,10 @@ public class LeaderElection {
                 } catch (InterruptedException e) {
                     logger.error(e);
                 }
+                logger.warn("Received COORDINATOR message after completing an election; " +
+                        "Multiple servers may have started teh election process at the same time.");
                 startElection();
             }
-            logger.warn("Received COORDINATOR message after completing an election; " +
-                    "Multiple servers may have started teh election process at the same time.");
         }
     }
 }
