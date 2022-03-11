@@ -2,6 +2,7 @@ package Server;
 
 import ClientHandler.ClientHandler;
 import Consensus.Leader;
+import Consensus.LeaderElection;
 import Constants.ChatServerConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +76,8 @@ public class ServerState {
 
 
             //TODO remove hardcoded Leader value
-            this.currentLeader = new Leader("1", "0.0.0.0", 5555);
+            LeaderElection.startElection();
+//            this.currentLeader = new Leader("1", "0.0.0.0", 5555);
 
         } catch (FileNotFoundException e) {
             logger.debug(e.getMessage());
@@ -135,6 +137,16 @@ public class ServerState {
 
     public Collection<Server> getServers() {
         return serversHashmap.values();
+    }
+
+    public Collection<Server> getServersHigherThanMyId() {
+        Collection<Server> higherServers = new ArrayList<>();
+        for (Server server: getServers()){
+            if (Integer.parseInt(server.getId()) > Integer.parseInt(getServerId())){
+                higherServers.add(server);
+            }
+        }
+        return higherServers;
     }
 
     public void addRoomToMap(Room room) {

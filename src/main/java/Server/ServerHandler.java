@@ -89,7 +89,7 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_ELECTION:
                         // This server received an ELECTION message
                         logger.trace("Received bully to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
-                        LeaderElection.replyOK(jsonPayload, serverSocket);
+                        LeaderElection.replyOKorPass(jsonPayload, serverSocket);
 //                    case ServerConstants.KIND_OK:
 //                        // This server received an OK message
 //                        // This server must be the election starter; TODO handle exception if not
