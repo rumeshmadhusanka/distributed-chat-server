@@ -38,7 +38,7 @@ public class Consensus {
      * @param value   the value you want to verify whether it is unique or not
      * @param askType room | identity
      */
-    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException {
+    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException, InterruptedException {
         boolean isUnique = true;
         HashMap<String, String> request;
         if (isLeader()) {
@@ -104,11 +104,12 @@ public class Consensus {
                 // Start leader election if
                 if (err.getCode().equals(ServerExceptionConstants.LEADER_FAILED_CODE) ||
                         err.getCode().equals(ServerExceptionConstants.NO_LEADER_CODE)) {
-                    logger.info("Leader either doesn't exist or failed. Starting Leader Election Process.");
-//                    LeaderElection.startElection();
+                    logger.debug("Leader either doesn't exist or failed. Starting Leader Election Process.");
+                    LeaderElection.startElection();
                     // TODO: Need to set an exit block the recursion. Take num of attempts into consideration.
-                    logger.info("Restarting verification process. Attempt: ");
-//                    verifyUniqueValue(value, askType);
+                    logger.debug("Restarting verification process. Attempt: ");
+                    Thread.sleep(5000);
+                    return verifyUniqueValue(value, askType);
                 } else {
                     throw err;
                 }
