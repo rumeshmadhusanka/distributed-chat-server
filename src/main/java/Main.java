@@ -13,6 +13,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
@@ -32,12 +35,12 @@ public class Main {
                 ServerProperties.LOCAL_ADDRESS,
                 ServerState.getServerState().getCoordinationPort());
         serverCoordinationSocket.bind(coordinationEndpoint);
-        logger.debug("Local Coordination Socket Address: " +serverCoordinationSocket.getLocalSocketAddress());
+        logger.debug("Local Coordination Socket Address: " + serverCoordinationSocket.getLocalSocketAddress());
         logger.info("Listening on coordination port: " + serverCoordinationSocket.getLocalPort());
 
         // Start listening to server connections.
-        Thread serverHandlerLoop = new Thread(()->{
-            while (true){
+        Thread serverHandlerLoop = new Thread(() -> {
+            while (true) {
                 // Start ServerHandler.
                 try {
                     Socket socket = serverCoordinationSocket.accept();
@@ -59,8 +62,19 @@ public class Main {
                 ServerState.getServerState().getClientsPort());
 
         serverClientSocket.bind(clientEndpoint);
-        logger.debug("Local Client Socket Address: " +serverClientSocket.getLocalSocketAddress());
-        logger.info("Waiting for clients on port "+ serverClientSocket.getLocalPort());
+        logger.debug("Local Client Socket Address: " + serverClientSocket.getLocalSocketAddress());
+        logger.info("Waiting for clients on port " + serverClientSocket.getLocalPort());
+
+//        Print the active thread count
+//        TimerTask timerTask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                logger.trace("Active thread count on server " + ServerState.getServerState().getServerId() + " : " + Thread.activeCount());
+//                logger.trace(Arrays.toString(Thread.getAllStackTraces().keySet().toArray()));
+//            }
+//        };
+//        new Timer(true).schedule(timerTask, 0, 1000);
+
 
         // Start ClientHandler.
         while (true) {

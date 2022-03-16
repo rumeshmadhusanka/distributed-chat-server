@@ -88,8 +88,8 @@ public class ServerHandler extends Thread {
                 switch (kind) {
                     case ServerConstants.KIND_ELECTION:
                         // This server received an ELECTION message
-                        logger.trace("Received bully to: " + ServerState.getServerState().getServerId());
-                        LeaderElection.replyOK(jsonPayload, serverSocket);
+                        logger.trace("Received bully to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
+                        LeaderElection.replyOKorPass(jsonPayload, serverSocket);
 //                    case ServerConstants.KIND_OK:
 //                        // This server received an OK message
 //                        // This server must be the election starter; TODO handle exception if not
@@ -98,10 +98,10 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
                         // TODO
-                        logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId());
+                        logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
                     case ServerConstants.KIND_COORDINATOR:
-                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId());
+                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
                 }
         }

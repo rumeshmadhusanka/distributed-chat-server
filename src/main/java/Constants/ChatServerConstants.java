@@ -42,6 +42,7 @@ public class ChatServerConstants {
 
         public static final String KIND_ELECTION = "election";
         public static final String KIND_OK = "ok";
+        public static final String KIND_PASS = "pass";
         public static final String KIND_ELECTED = "elected";
         public static final String KIND_COORDINATOR = "coordinator";
     }
