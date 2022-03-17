@@ -9,31 +9,30 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ServerState {
 
     private static final Logger logger = LogManager.getLogger(ServerState.class);
-
-    private String serverId;
-    private String serverAddress;
-
-    private int coordinationPort;
-    private int clientsPort;
-
+    private static ServerState serverState;
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
+    private String serverId;
+    private String serverAddress;
+    private int coordinationPort;
+    private int clientsPort;
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
 
 
     private long myHeartBeat = 0;
     private Leader currentLeader = null;
-
-    private static ServerState serverState;
 
     private ServerState() {
     }
@@ -114,6 +113,18 @@ public class ServerState {
         return roomsHashMap.get(roomId);
     }
 
+    public void updateRoom(Room room) {
+        String roomId = room.getRoomId();
+        if (roomsHashMap.containsKey(roomId)) {
+            roomsHashMap.put(roomId, room);
+        }
+    }
+
+    public ConcurrentLinkedQueue<ClientHandler> getClientsInRoom(String roomId) {
+        Room room = roomsHashMap.get(roomId);
+        return room.getClientIdentityList();
+    }
+
     public Room getMainHall() {
         return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId);
     }
@@ -145,8 +156,8 @@ public class ServerState {
 
     public Collection<Server> getServersHigherThanMyId() {
         Collection<Server> higherServers = new ArrayList<>();
-        for (Server server: getServers()){
-            if (Integer.parseInt(server.getId()) > Integer.parseInt(getServerId())){
+        for (Server server : getServers()) {
+            if (Integer.parseInt(server.getId()) > Integer.parseInt(getServerId())) {
                 higherServers.add(server);
             }
         }
@@ -170,7 +181,7 @@ public class ServerState {
         roomsHashMap.remove(room.getRoomId());
     }
 
-    public boolean hasRoomId(String identity){
+    public boolean hasRoomId(String identity) {
         return roomsHashMap.containsKey(identity);
     }
 
@@ -190,7 +201,7 @@ public class ServerState {
         return identityList;
     }
 
-    public boolean hasIdentity(String identity){
+    public boolean hasIdentity(String identity) {
         return identityList.contains(identity);
     }
 

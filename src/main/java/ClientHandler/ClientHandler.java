@@ -16,8 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 
 public class ClientHandler extends Thread {
@@ -26,6 +25,8 @@ public class ClientHandler extends Thread {
     final Object lock;
     private final Socket clientSocket;
     private boolean quitFlag;
+    private String currentIdentity;
+    private String currentRoom = "";
 
 
     public ClientHandler(Socket clientSocket) {
@@ -47,7 +48,7 @@ public class ClientHandler extends Thread {
                 logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
-        } catch (IOException | ParseException | ServerException e) {
+        } catch (IOException | ParseException | ServerException | InterruptedException e) {
             logger.info(e.getMessage());
         }
     }
@@ -57,62 +58,59 @@ public class ClientHandler extends Thread {
      *
      * @param jsonPayload -  Request as a JSONObject.
      */
-    public void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException {
+    public void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException, InterruptedException {
         String type = (String) jsonPayload.get("type");
 
-        String identity;
-        try {
-            switch (type) {
-                case ClientConstants.TYPE_CREATE_ID:
 
-                    logger.debug("Resolving create new identity.");
-                    identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                    logger.debug("New identity: " + identity);
-                    if ((identity.length() > 3) && (identity.length() <= 16) && Character.isLetter(identity.charAt(0))) {
-                        createNewIdentity(identity);
+        switch (type) {
+            case ClientConstants.TYPE_CREATE_ID:
+                logger.debug("Resolving create new identity.");
+                String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
+                logger.debug("New identity: " + identity);
+                createNewIdentity(identity);
+                break;
 
-                    } else {
-                        JSONObject response = buildApprovedJSON(type, ClientConstants.FALSE);
-                        Messaging.respond(response, this.clientSocket);
-                    }
-                    break;
+            case ClientConstants.TYPE_CREATE_ROOM:
+                logger.debug("Resolving create new room.");
+                String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
+                logger.debug("New room: " + roomId);
+                createNewRoom(roomId);
+                break;
 
-                case ClientConstants.TYPE_CREATE_ROOM:
-                    String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-                    //TODO: Implement new room logic
-                    break;
+            case ClientConstants.TYPE_DELETE_ROOM:
+                logger.debug("Deleting room");
+                String delRoomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
+                logger.debug("Delete room: " + delRoomId);
+                deleteRoom(delRoomId);
+                break;
 
-                case ClientConstants.TYPE_DELETE_ROOM:
-                    logger.debug("Deleting room");
-                    break;
+            case ClientConstants.TYPE_JOIN_ROOM:
+                logger.debug("Joining room");
+                break;
 
-                case ClientConstants.TYPE_JOIN_ROOM:
-                    logger.debug("Joining room");
-                    break;
+            case ClientConstants.TYPE_LIST:
+                logger.debug("Sending users in room");
+                break;
 
-                case ClientConstants.TYPE_LIST:
-                    logger.debug("Sending users in room");
-                    break;
+            case ClientConstants.TYPE_MESSAGE:
+                logger.debug("Message received");
+                break;
 
-                case ClientConstants.TYPE_MESSAGE:
-                    logger.debug("Message received");
-                    break;
+            case ClientConstants.TYPE_MOVE_JOIN:
+                logger.debug("Sending route info");
+                break;
 
-                case ClientConstants.TYPE_MOVE_JOIN:
-                    logger.debug("Sending route info");
-                    break;
+            case ClientConstants.TYPE_QUIT:
+                this.quitFlag = true;
+                break;
 
-                case ClientConstants.TYPE_QUIT:
-                    this.quitFlag = true;
-                    break;
-
-                case ClientConstants.TYPE_WHO:
-                    break;
-
-            }
-        } catch (IOException | ServerException | ParseException e) {
-            throw e;
+            case ClientConstants.TYPE_WHO:
+                break;
         }
+    }
+
+    private boolean meetsCriteria(String value) {
+        return ((value.length() < 3) || (value.length() > 16) || !Character.isLetter(value.charAt(0)));
     }
 
     /**
@@ -122,37 +120,166 @@ public class ClientHandler extends Thread {
      * @throws IOException
      * @throws ParseException
      */
-    public void createNewIdentity(String identity) throws ServerException, IOException, ParseException {
+    public void createNewIdentity(String identity) throws ServerException, IOException, ParseException, InterruptedException {
         JSONObject response;
+
+        // Send false if identity doesn't meet the preferred criteria.
+        if (meetsCriteria(identity)) {
+            response = buildApprovedJSONId(ClientConstants.FALSE);
+            Messaging.respond(response, this.clientSocket);
+            return;
+        }
 
         // Verify identity.
         boolean isAvailable = Consensus.verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
         logger.debug("New identity availability: " + isAvailable);
         if (!isAvailable) {
-            response = buildApprovedJSON(ClientConstants.TYPE_CREATE_ID, ClientConstants.FALSE);
+            response = buildApprovedJSONId(ClientConstants.FALSE);
             Messaging.respond(response, this.clientSocket);
             return;
         }
         // Add identity to server state.
         ServerState.getServerState().addIdentity(identity);
-        // Broadcast identity to other servers.
+        // Send the current identity for the client handler.
+        currentIdentity = identity;
+        //TODO: Broadcast identity to other servers.
         //Messaging.broadcastClients(new JSONObject());
-        // Send appropriate response.
-        response = buildApprovedJSON(ClientConstants.TYPE_CREATE_ID, ClientConstants.TRUE);
+        // Send appropriate response back to client.
+        response = buildApprovedJSONId(ClientConstants.TRUE);
         Messaging.respond(response, this.clientSocket);
-        // Get mainHall room.
+        // Get mainHall room from ServerState.
         Room mainHall = ServerState.getServerState().getMainHall();
-        // Add client to main hall
-        changeRoom(identity, mainHall);
+        // Add client to the main hall.
+        changeRoom(mainHall);
     }
 
-    private JSONObject buildApprovedJSON(String type, String approved) {
+    /**
+     * Create new chat room.
+     *
+     * @param roomId - Room id sent by the client.
+     * @throws ServerException
+     * @throws IOException
+     * @throws ParseException
+     * @throws InterruptedException
+     */
+    private void createNewRoom(String roomId) throws ServerException, IOException, ParseException, InterruptedException {
+        JSONObject response;
+
+        // Send false if room id doesn't meet the preferred criteria.
+        if (meetsCriteria(roomId)) {
+            response = buildApprovedJSONRoom(ClientConstants.TYPE_CREATE_ROOM, ClientConstants.FALSE, roomId);
+            Messaging.respond(response, this.clientSocket);
+            return;
+        }
+
+        // Verify room id.
+        boolean isAvailable = Consensus.verifyUniqueValue(roomId, ChatServerConstants.ServerConstants.ROOM_ID);
+        logger.debug("New room id availability: " + isAvailable);
+        if (!isAvailable) {
+            response = buildApprovedJSONRoom(ClientConstants.TYPE_CREATE_ROOM, ClientConstants.FALSE, roomId);
+            Messaging.respond(response, this.clientSocket);
+            return;
+        }
+        // Get current server id.
+        String serverId = ServerState.getServerState().getServerId();
+        // Add room to server state.
+        ServerState.getServerState().addRoomToMap(new Room(serverId, roomId, currentIdentity));
+        // Set current room of the client handler.
+        // Send appropriate response back to client.
+        response = buildApprovedJSONRoom(ClientConstants.TYPE_CREATE_ROOM, ClientConstants.TRUE, roomId);
+        Messaging.respond(response, this.clientSocket);
+
+        // Change room of the client.
+        changeRoom(ServerState.getServerState().getRoom(roomId));
+    }
+
+    /**
+     * Create new chat room.
+     *
+     * @param roomId - Room id sent by the client.
+     * @throws ServerException
+     * @throws IOException
+     * @throws ParseException
+     * @throws InterruptedException
+     */
+    private void deleteRoom(String roomId) throws ServerException, IOException, ParseException, InterruptedException {
+        JSONObject response;
+
+        // Get room from server state.
+        Room room = ServerState.getServerState().getRoom(roomId);
+        if (isMainHall(roomId) || room == null || !currentIdentity.equals(room.getOwner())) {
+            response = buildApprovedJSONRoom(ClientConstants.TYPE_DELETE_ROOM, ClientConstants.FALSE, roomId);
+            Messaging.respond(response, this.clientSocket);
+            return;
+        }
+        // Get clients in the room.
+        Collection<ClientHandler> roomClients = ServerState.getServerState().getClientsInRoom(roomId);
+
+        // Get mainHall from the ServerState.
+        Room mainHall = ServerState.getServerState().getMainHall();
+        Collection<ClientHandler> mainHallClients = ServerState.getServerState().getClientsInRoom(mainHall.getRoomId());
+        Collection<ClientHandler> tempRoomClients = new ArrayList<>(mainHallClients);
+
+        // Move all the client in the room to main hall.
+        for (ClientHandler client : roomClients) {
+            mainHall.addClient(client);
+            JSONObject roomChangeRequest = buildRoomChangeJSON(
+                    client.getCurrentIdentity(), room.getRoomId(), mainHall.getRoomId());
+            Messaging.respond(roomChangeRequest, client.getClientSocket());
+        }
+        // Update mainHall in ServerState.
+        ServerState.getServerState().updateRoom(mainHall);
+
+        // Inform clients in main hall.
+        informClientChangeRoom(tempRoomClients, mainHall.getRoomId());
+
+        // Remove the room from ServerState.
+        ServerState.getServerState().removeRoom(room);
+        // Send appropriate response back to client.
+        response = buildApprovedJSONRoom(ClientConstants.TYPE_DELETE_ROOM, ClientConstants.TRUE, roomId);
+        Messaging.respond(response, this.clientSocket);
+    }
+
+    private boolean isMainHall(String roomId) {
+        return roomId.equals(ServerState.getServerState().getMainHall().getRoomId());
+    }
+
+    /**
+     * Create a response JSON object for create identity scenario.
+     *
+     * @param approved - Boolean value indicating whether the identity was approved or not.
+     * @return -  Response JSON object.
+     */
+    private JSONObject buildApprovedJSONId(String approved) {
         HashMap<String, String> response = new HashMap<>();
-        response.put(ClientConstants.TYPE, type);
+        response.put(ClientConstants.TYPE, ClientConstants.TYPE_CREATE_ID);
         response.put(ClientConstants.APPROVED, approved);
         return new JSONObject(response);
     }
 
+    /**
+     * Create a response JSON object for create room scenario.
+     *
+     * @param type
+     * @param approved - Boolean value indicating whether the room id was approved or not.
+     * @return -  Response JSON object.
+     */
+    private JSONObject buildApprovedJSONRoom(String type, String approved, String roomId) {
+        HashMap<String, String> response = new HashMap<>();
+        response.put(ClientConstants.TYPE, type);
+        response.put(ClientConstants.APPROVED, approved);
+        response.put(ClientConstants.ROOM_ID, roomId);
+        return new JSONObject(response);
+    }
+
+    /**
+     * Create a JSON object to inform about room change to clients.
+     *
+     * @param identity - Identity of the client.
+     * @param former   - Previous room client was in.
+     * @param roomId   - New room id.
+     * @return - JSON object.
+     */
     private JSONObject buildRoomChangeJSON(String identity, String former, String roomId) {
         HashMap<String, String> request = new HashMap<>();
         request.put(ClientConstants.TYPE, ClientConstants.CHANGE_ROOM);
@@ -162,21 +289,49 @@ public class ClientHandler extends Thread {
         return new JSONObject(request);
     }
 
-    private void changeRoom(String identity, Room room) throws IOException {
+    /**
+     * Change the room of an identity to a given room.
+     *
+     * @param room - Room to be assigned to.
+     * @throws IOException
+     */
+    private void changeRoom(Room room) throws IOException {
 
         logger.debug("Changing client room to: " + room.getRoomId());
-        // TODO: Add client to room's client list upon receiving joinroom request.
-        room.addClientIdentity(identity);
-
-        String former;
-        if (room.isMainHall()) {
-            former = "";
-        } else {
-            former = "Find previous room of the identity";
+        // Remove client from previous room.
+        logger.debug("Current room: " + currentRoom);
+        if(!currentRoom.equals("")){
+            Room prevRoom = ServerState.getServerState().getRoom(currentRoom);
+            prevRoom.removeClient(this);
+            ServerState.getServerState().updateRoom(prevRoom);
         }
-        JSONObject roomChangeRequest = buildRoomChangeJSON(identity, former, room.getRoomId());
-        Messaging.respond(roomChangeRequest, clientSocket);
+        // Add client to new room.
+        room.addClient(this);
+        ServerState.getServerState().updateRoom(room);
+        Collection<ClientHandler> connectedClients = ServerState.getServerState().getClientHandlerHashMap().values();
+        logger.debug("Broadcasting to connected clients in the room: " + room.getRoomId());
+        informClientChangeRoom(connectedClients, room.getRoomId());
+        currentRoom = room.getRoomId();
     }
 
+    private void informClientChangeRoom(Collection<ClientHandler> clients, String roomId) throws IOException {
+        for (ClientHandler client : clients) {
+            if (client.getCurrentRoom().equals(this.currentRoom) || client.getCurrentRoom().equals(roomId)) {
+                JSONObject roomChangeRequest = buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
+                Messaging.respond(roomChangeRequest, client.getClientSocket());
+            }
+        }
+    }
 
+    public String getCurrentIdentity() {
+        return currentIdentity;
+    }
+
+    public String getCurrentRoom() {
+        return currentRoom;
+    }
+
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
 }
