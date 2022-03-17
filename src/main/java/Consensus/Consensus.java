@@ -25,11 +25,17 @@ public class Consensus {
      *
      * @return boolean
      */
-    private static boolean isLeader() {
-        Leader leader = ServerState.getServerState().getCurrentLeader();
-        logger.debug("Leader id: " + leader.getId());
+    private static boolean isLeader() throws ServerException {
+        Leader currentLeader = ServerState.getServerState().getCurrentLeader();
+        if (currentLeader == null) {
+            logger.info("No elected leader present in ServerState.");
+            throw new ServerException(
+                    ServerExceptionConstants.NO_LEADER_MSG,
+                    ServerExceptionConstants.NO_LEADER_CODE);
+        }
+        logger.debug("Leader id: " + currentLeader.getId());
         logger.debug("Self id: " + ServerState.getServerState().getServerId());
-        return ServerState.getServerState().getServerId().equals(leader.getId());
+        return ServerState.getServerState().getServerId().equals(currentLeader.getId());
     }
 
     /**
@@ -38,32 +44,33 @@ public class Consensus {
      * @param value   the value you want to verify whether it is unique or not
      * @param askType room | identity
      */
-    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException {
+    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException, InterruptedException {
         boolean isUnique = true;
         HashMap<String, String> request;
-        if (isLeader()) {
-            logger.debug("Taking 'Is the leader path'.");
-            // build the request
-            request = createRequestMap();
-            request.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
-            switch (askType) {
-                case ServerConstants.IDENTITY:
-                    request.put(ServerConstants.IDENTITY, value);
-                    break;
-                case ServerConstants.ROOM_ID:
-                    request.put(ServerConstants.ROOM_ID, value);
-            }
-            Collection<Server> servers = ServerState.getServerState().getServers();
-            ConcurrentHashMap<String, JSONObject> responses = Messaging.askServers(new JSONObject(request), servers);
-            logger.debug("Response object for Ask Servers:" + (responses.values()));
-            for (JSONObject response : responses.values()) {
-                if (!Boolean.parseBoolean((String) response.get("unique"))) {
-                    isUnique = false;
-                    break;
+        try {
+            if (isLeader()) {
+                logger.debug("Taking 'Is the leader path'.");
+                // build the request
+                request = createRequestMap();
+                request.put(ServerConstants.KIND, ServerConstants.KIND_VERIFY_UNIQUE);
+                switch (askType) {
+                    case ServerConstants.IDENTITY:
+                        request.put(ServerConstants.IDENTITY, value);
+                        break;
+                    case ServerConstants.ROOM_ID:
+                        request.put(ServerConstants.ROOM_ID, value);
                 }
-            }
-        } else {
-            try {
+                Collection<Server> servers = ServerState.getServerState().getServers();
+                ConcurrentHashMap<String, JSONObject> responses = Messaging.askServers(new JSONObject(request), servers);
+                logger.debug("Response object for Ask Servers:" + (responses.values()));
+                for (JSONObject response : responses.values()) {
+                    if (!Boolean.parseBoolean((String) response.get("unique"))) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+            } else {
+
                 logger.debug("Taking 'Not the leader path'.");
                 // Get current leader.
                 Leader currentLeader = ServerState.getServerState().getCurrentLeader();
@@ -100,18 +107,19 @@ public class Consensus {
                     isUnique = Boolean.parseBoolean((String) response.get(ServerConstants.SUCCESS));
                 }
 
-            } catch (ServerException err) {
-                // Start leader election if
-                if (err.getCode().equals(ServerExceptionConstants.LEADER_FAILED_CODE) ||
-                        err.getCode().equals(ServerExceptionConstants.NO_LEADER_CODE)) {
-                    logger.info("Leader either doesn't exist or failed. Starting Leader Election Process.");
-//                    LeaderElection.startElection();
-                    // TODO: Need to set an exit block the recursion. Take num of attempts into consideration.
-                    logger.info("Restarting verification process. Attempt: ");
-//                    verifyUniqueValue(value, askType);
-                } else {
-                    throw err;
-                }
+            }
+        } catch (ServerException err) {
+            // Start leader election if
+            if (err.getCode().equals(ServerExceptionConstants.LEADER_FAILED_CODE) ||
+                    err.getCode().equals(ServerExceptionConstants.NO_LEADER_CODE)) {
+                logger.debug("Leader either doesn't exist or failed. Starting Leader Election Process.");
+                LeaderElection.startElection();
+                // TODO: Need to set an exit block the recursion. Take num of attempts into consideration.
+                logger.debug("Restarting verification process. Attempt: ");
+                Thread.sleep(5000);
+                return verifyUniqueValue(value, askType);
+            } else {
+                throw err;
             }
         }
         return isUnique;

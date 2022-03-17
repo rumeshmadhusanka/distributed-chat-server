@@ -1,13 +1,20 @@
 package Gossiping;
 
-public class GossipingHandler extends Thread{
+import org.json.simple.JSONObject;
+
+public class GossipingHandler {
 
     /* TODO: Implement handler class to run on separate threads.
        Note: Implement communication related methods in Messaging class.
     * */
 
-    @Override
-    public void run() {
+    public static void startGossiping(JSONObject jsonObject) {
 
+        Thread gossipingThread = new Thread(() -> {
+
+        });
+        gossipingThread.setDaemon(true);
+        gossipingThread.setName("Gossiping-Thread");
+        gossipingThread.start();
     }
 }

@@ -41,7 +41,7 @@ public class ServerHandler extends Thread {
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
-        } catch (IOException | ParseException | ServerException e) {
+        } catch (IOException | ParseException | ServerException | InterruptedException e) {
             logger.debug(e.getMessage());
         }
     }
@@ -54,7 +54,7 @@ public class ServerHandler extends Thread {
      * @throws ParseException
      * @throws ServerException
      */
-    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException {
+    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException, InterruptedException {
         String type = (String) jsonPayload.get(ServerConstants.TYPE);
         String kind = (String) jsonPayload.get(ServerConstants.KIND);
 
@@ -130,7 +130,7 @@ public class ServerHandler extends Thread {
         Messaging.respond(new JSONObject(responseMap), serverSocket);
     }
 
-    private void handleRequestToCreate(JSONObject jsonPayload, String type) throws ServerException, IOException, ParseException {
+    private void handleRequestToCreate(JSONObject jsonPayload, String type) throws ServerException, IOException, ParseException, InterruptedException {
         boolean isAvailable;
         JSONObject response = null;
         switch (type) {
