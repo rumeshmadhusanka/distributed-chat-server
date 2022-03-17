@@ -27,7 +27,7 @@ public class ServerState {
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
-    private final ConcurrentHashMap<String, Long> heartbeats = new ConcurrentHashMap<>(); //store heartbeats
+    private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
 
 
     private long myHeartBeat = 0;
@@ -194,8 +194,8 @@ public class ServerState {
         return identityList.contains(identity);
     }
 
-    public ConcurrentHashMap<String, Long> getHeartbeats() {
-        return heartbeats;
+    public ConcurrentHashMap<String, Long> getHeartbeatMap() {
+        return heartBeatMap;
     }
 
     public long getMyHeartBeat() {

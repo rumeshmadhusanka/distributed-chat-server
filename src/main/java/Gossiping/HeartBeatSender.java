@@ -8,6 +8,8 @@ import org.json.simple.JSONObject;
 
 import java.util.*;
 
+import static Utilities.Util.getRandomServers;
+
 public class HeartBeatSender extends TimerTask {
 
     private static JSONObject buildHeartBeatMessage(long timestamp) {
@@ -19,22 +21,11 @@ public class HeartBeatSender extends TimerTask {
         return new JSONObject(requestMap);
     }
 
-    private static Collection<Server> getRandomServes(Collection<Server> servers, int n) {
-        ArrayList<Server> serversList = new ArrayList<>(servers);
-        Random random = new Random();
-        Collection<Server> randomServers = new ArrayList<>();
-        //select servers randomly
-        for (int i = 0; i < n; i++) {
-            randomServers.add(serversList.get(random.nextInt(serversList.size())));
-        }
-        return randomServers;
-    }
-
     @Override
     public void run() {
         //increase my heartbeat timestamp
         ServerState.getServerState().setMyHeartBeat(System.currentTimeMillis());
-        Collection<Server> randomServers = getRandomServes(ServerState.getServerState().getServers(), 2);
+        Collection<Server> randomServers = getRandomServers(ServerState.getServerState().getServers(), 2);
         Messaging.sendAndForget(buildHeartBeatMessage(ServerState.getServerState().getMyHeartBeat()), randomServers);
 
     }
