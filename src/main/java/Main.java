@@ -2,6 +2,7 @@ import ClientHandler.ClientHandler;
 import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ServerProperties;
+import Gossiping.HeartBeatSender;
 import Server.Room;
 import Server.ServerHandler;
 import Server.ServerState;
@@ -66,15 +67,17 @@ public class Main {
         logger.info("Waiting for clients on port " + serverClientSocket.getLocalPort());
 
 //        Print the active thread count
-//        TimerTask timerTask = new TimerTask() {
-//            @Override
-//            public void run() {
-//                logger.trace("Active thread count on server " + ServerState.getServerState().getServerId() + " : " + Thread.activeCount());
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                logger.trace("Active thread count on server " + ServerState.getServerState().getServerId() + " : " + Thread.activeCount());
 //                logger.trace(Arrays.toString(Thread.getAllStackTraces().keySet().toArray()));
-//            }
-//        };
-//        new Timer(true).schedule(timerTask, 0, 1000);
+            }
+        };
+        new Timer(true).schedule(timerTask, 0, 5000);
 
+        //start the Heartbeat Sender
+        new Timer(true).schedule(new HeartBeatSender(),0, 3000);
 
         // Start ClientHandler.
         while (true) {

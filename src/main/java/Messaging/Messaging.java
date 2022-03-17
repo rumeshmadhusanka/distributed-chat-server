@@ -105,23 +105,13 @@ public class Messaging {
             executorService.submit(() -> {
                 try {
                     Socket socket = new Socket(server.getAddress(), server.getPort());
-                    sendRequest(request, socket);
-                    socket.close();
+                    sendOnly(request, socket);
                 } catch (Exception e) {
                     logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort() + " msg: " + request.toJSONString());
                 }
             });
         }
         executorService.shutdown();
-        try {
-            //wait till completion or 5s or interruption of this thread
-            if (!executorService.awaitTermination(ServerProperties.CONN_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                executorService.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
     }
 
     public static JSONObject contactLeader(JSONObject request, Leader leader) throws ServerException, IOException, ParseException {
@@ -152,5 +142,12 @@ public class Messaging {
         String line = serverInputScanner.nextLine();
         logger.debug("Received -: " + line);
         return line;
+    }
+
+    private static void sendOnly(JSONObject request, Socket socket) throws IOException {
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.flush();
+        socket.close();
     }
 }
