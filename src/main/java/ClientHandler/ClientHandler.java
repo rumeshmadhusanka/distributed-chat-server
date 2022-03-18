@@ -131,7 +131,7 @@ public class ClientHandler extends Thread {
         }
 
         // Verify identity.
-        boolean isAvailable = Consensus.verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
+        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
         logger.debug("New identity availability: " + isAvailable);
         if (!isAvailable) {
             response = buildApprovedJSONId(ClientConstants.FALSE);
@@ -173,7 +173,7 @@ public class ClientHandler extends Thread {
         }
 
         // Verify room id.
-        boolean isAvailable = Consensus.verifyUniqueValue(roomId, ChatServerConstants.ServerConstants.ROOM_ID);
+        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(roomId, ChatServerConstants.ServerConstants.ROOM_ID);
         logger.debug("New room id availability: " + isAvailable);
         if (!isAvailable) {
             response = buildApprovedJSONRoom(ClientConstants.TYPE_CREATE_ROOM, ClientConstants.FALSE, roomId);
