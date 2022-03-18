@@ -1,19 +1,19 @@
 package Server;
 
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 
 public class Server implements Comparable<Server> {
 
     private final String id;
     private final String address;
     private final int port;
+    private final int clientPort;
 
-    public Server(String id, String address, int port) {
+    public Server(String id, String address, int port, int clientPort) {
         this.id = id;
         this.address = address;
         this.port = port;
+        this.clientPort = clientPort;
     }
 
     public String getId() {
@@ -41,6 +41,10 @@ public class Server implements Comparable<Server> {
             return 1;
         }
         return -1;
+    }
+
+    public int getClientPort() {
+        return clientPort;
     }
 
     public static class ServerComparator implements Comparator<Server> {
