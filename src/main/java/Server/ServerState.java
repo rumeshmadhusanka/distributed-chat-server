@@ -24,10 +24,12 @@ public class ServerState {
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
+    private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
     private String serverId;
     private String serverAddress;
     private int coordinationPort;
     private int clientsPort;
+    private long myHeartBeat = 0;
     private Leader currentLeader = null;
 
     private ServerState() {
@@ -203,5 +205,17 @@ public class ServerState {
 
     public void deleteIdentity(String identity) {
         identityList.remove(identity);
+    }
+
+    public ConcurrentHashMap<String, Long> getHeartbeatMap() {
+        return heartBeatMap;
+    }
+
+    public long getMyHeartBeat() {
+        return myHeartBeat;
+    }
+
+    public void setMyHeartBeat(long myHeartBeat) {
+        this.myHeartBeat = myHeartBeat;
     }
 }
