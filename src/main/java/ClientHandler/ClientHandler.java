@@ -63,7 +63,7 @@ public class ClientHandler extends Thread {
      *
      * @param jsonPayload -  Request as a JSONObject.
      */
-    public void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException, InterruptedException {
+    private void resolveClientRequest(JSONObject jsonPayload) throws ServerException, IOException, ParseException, InterruptedException {
         String type = (String) jsonPayload.get("type");
 
 
@@ -97,31 +97,12 @@ public class ClientHandler extends Thread {
                 break;
 
             case ClientConstants.TYPE_MESSAGE:
-                logger.debug("Message received");
+                logger.debug("Message received.");
                 break;
 
             case ClientConstants.TYPE_MOVE_JOIN:
-                String mjIdentity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                String mjFormerRoom = (String) jsonPayload.get(ClientConstants.FORMER_ROOM);
-                String mjRoom = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-                logger.debug("Move join request received for client: " + mjIdentity + ". Former room: " + mjFormerRoom);
-                logger.debug("Joining new room: " + mjRoom);
-                // Set values for new client.
-                currentIdentity = mjIdentity;
-                currentRoom = mjFormerRoom;
-                // Get room from server state.
-                Room room = ServerState.getServerState().getRoom(mjRoom);
-                informServerChange();
-                if (room == null) {
-                    // Add client to main hall.
-                    changeRoom(ServerState.getServerState().getMainHall());
-                } else {
-                    // Add client to the room.
-                    changeRoom(room);
-                }
-
-                // Inform client about server change.
-//                informServerChange();
+                logger.debug("Handling movejoin.");
+                handleMoveJoin(jsonPayload);
                 break;
 
             case ClientConstants.TYPE_QUIT:
@@ -133,6 +114,38 @@ public class ClientHandler extends Thread {
         }
     }
 
+    /**
+     * Handle movejoin.
+     *
+     * @param jsonPayload - JSON payload.
+     * @throws IOException
+     */
+    private void handleMoveJoin(JSONObject jsonPayload) throws IOException {
+        String mjIdentity = (String) jsonPayload.get(ClientConstants.IDENTITY);
+        String mjFormerRoom = (String) jsonPayload.get(ClientConstants.FORMER_ROOM);
+        String mjRoom = (String) jsonPayload.get(ClientConstants.ROOM_ID);
+        logger.debug("Move join request received for client: " + mjIdentity + ". Former room: " + mjFormerRoom);
+        logger.debug("Joining new room: " + mjRoom);
+        // Set values for new client.
+        currentIdentity = mjIdentity;
+        currentRoom = mjFormerRoom;
+        // Get room from server state.
+        Room room = ServerState.getServerState().getRoom(mjRoom);
+        informServerChange();
+        if (room == null) {
+            // Add client to main hall.
+            changeRoom(ServerState.getServerState().getMainHall());
+        } else {
+            // Add client to the room.
+            changeRoom(room);
+        }
+    }
+
+    /**
+     * Confirm about server change.
+     *
+     * @throws IOException
+     */
     private void informServerChange() throws IOException {
         logger.debug("Sending server change confirmation.");
         HashMap<String, String> request = new HashMap<>();
@@ -159,7 +172,7 @@ public class ClientHandler extends Thread {
      * @throws IOException
      * @throws ParseException
      */
-    public void createNewIdentity(String identity) throws ServerException, IOException, ParseException, InterruptedException {
+    private void createNewIdentity(String identity) throws ServerException, IOException, ParseException, InterruptedException {
         JSONObject response;
 
         // Send false if identity doesn't meet the preferred criteria.
