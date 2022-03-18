@@ -6,6 +6,7 @@ import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ChatServerConstants.ServerExceptionConstants;
 import Exception.ServerException;
+import Gossiping.Gossiping;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,7 @@ public class ServerHandler extends Thread {
             InputStream inputFromClient = serverSocket.getInputStream();
             Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
             String line = serverInputScanner.nextLine();
-            logger.debug("Received: " + line);
+//            logger.trace("Received: " + line);
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
@@ -82,6 +83,8 @@ public class ServerHandler extends Thread {
                         // TODO: Inform servers
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
                         // TODO: Inform servers
+                    case ServerConstants.KIND_HEARTBEAT:
+                        Gossiping.receiveHeartBeat(jsonPayload);
                 }
                 break;
             case ServerConstants.TYPE_BULLY:

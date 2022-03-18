@@ -28,6 +28,10 @@ public class ServerState {
     private String serverAddress;
     private int coordinationPort;
     private int clientsPort;
+    private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
+
+
+    private long myHeartBeat = 0;
     private Leader currentLeader = null;
 
     private ServerState() {
@@ -199,5 +203,17 @@ public class ServerState {
 
     public boolean hasIdentity(String identity) {
         return identityList.contains(identity);
+    }
+
+    public ConcurrentHashMap<String, Long> getHeartbeatMap() {
+        return heartBeatMap;
+    }
+
+    public long getMyHeartBeat() {
+        return myHeartBeat;
+    }
+
+    public void setMyHeartBeat(long myHeartBeat) {
+        this.myHeartBeat = myHeartBeat;
     }
 }
