@@ -107,7 +107,7 @@ public class Messaging {
                     Socket socket = new Socket(server.getAddress(), server.getPort());
                     sendOnly(request, socket);
                 } catch (Exception e) {
-                    logger.debug("Connection failed for server: " + server.getAddress() + ":" + server.getPort() + " msg: " + request.toJSONString());
+                    logger.trace("Connection failed for server: " + server.getAddress() + ":" + server.getPort() + " msg: " + request.toJSONString());
                 }
             });
         }
