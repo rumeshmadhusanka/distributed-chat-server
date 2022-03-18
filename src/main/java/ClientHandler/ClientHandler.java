@@ -47,11 +47,12 @@ public class ClientHandler extends Thread {
             InputStream inputFromClient = clientSocket.getInputStream();
             Scanner scanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
 
-            while (!quitFlag) {
+            while (!quitFlag && scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
+            logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " disconnected.");
         } catch (IOException | ParseException | ServerException | InterruptedException e) {
             logger.info(e.getMessage());
         }
@@ -68,28 +69,27 @@ public class ClientHandler extends Thread {
 
         switch (type) {
             case ClientConstants.TYPE_CREATE_ID:
-                logger.debug("Resolving create new identity.");
                 String identity = (String) jsonPayload.get(ClientConstants.IDENTITY);
-                logger.debug("New identity: " + identity);
+                logger.debug("Creating new identity: " + identity);
                 createNewIdentity(identity);
                 break;
 
             case ClientConstants.TYPE_CREATE_ROOM:
-                logger.debug("Resolving create new room.");
-                String roomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-                logger.debug("New room: " + roomId);
+                String roomId = getRoomId(jsonPayload);
+                logger.debug("Creating new room: " + roomId);
                 createNewRoom(roomId);
                 break;
 
             case ClientConstants.TYPE_DELETE_ROOM:
-                logger.debug("Deleting room");
-                String delRoomId = (String) jsonPayload.get(ClientConstants.ROOM_ID);
-                logger.debug("Delete room: " + delRoomId);
+                String delRoomId = getRoomId(jsonPayload);
+                logger.debug("Deleting room: " + delRoomId);
                 deleteRoom(delRoomId);
                 break;
 
             case ClientConstants.TYPE_JOIN_ROOM:
-                logger.debug("Joining room");
+                String joinRoomId = getRoomId(jsonPayload);
+                logger.debug("Joining room: " + joinRoomId);
+                joinRoom(joinRoomId);
                 break;
 
             case ClientConstants.TYPE_LIST:
@@ -101,7 +101,27 @@ public class ClientHandler extends Thread {
                 break;
 
             case ClientConstants.TYPE_MOVE_JOIN:
-                logger.debug("Sending route info");
+                String mjIdentity = (String) jsonPayload.get(ClientConstants.IDENTITY);
+                String mjFormerRoom = (String) jsonPayload.get(ClientConstants.FORMER_ROOM);
+                String mjRoom = (String) jsonPayload.get(ClientConstants.ROOM_ID);
+                logger.debug("Move join request received for client: " + mjIdentity + ". Former room: " + mjFormerRoom);
+                logger.debug("Joining new room: " + mjRoom);
+                // Set values for new client.
+                currentIdentity = mjIdentity;
+                currentRoom = mjFormerRoom;
+                // Get room from server state.
+                Room room = ServerState.getServerState().getRoom(mjRoom);
+                informServerChange();
+                if (room == null) {
+                    // Add client to main hall.
+                    changeRoom(ServerState.getServerState().getMainHall());
+                } else {
+                    // Add client to the room.
+                    changeRoom(room);
+                }
+
+                // Inform client about server change.
+//                informServerChange();
                 break;
 
             case ClientConstants.TYPE_QUIT:
@@ -111,6 +131,15 @@ public class ClientHandler extends Thread {
             case ClientConstants.TYPE_WHO:
                 break;
         }
+    }
+
+    private void informServerChange() throws IOException {
+        logger.debug("Sending server change confirmation.");
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ClientConstants.TYPE, ClientConstants.SERVER_CHANGE);
+        request.put(ClientConstants.APPROVED, ClientConstants.TRUE);
+        request.put(ClientConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        Messaging.respond(new JSONObject(request), this.clientSocket);
     }
 
     /**
@@ -257,6 +286,60 @@ public class ClientHandler extends Thread {
     }
 
     /**
+     * Extract room id value from request.
+     *
+     * @param jsonPayload - JSON payload.
+     * @return - Room id extracted.
+     */
+    private String getRoomId(JSONObject jsonPayload) {
+        return (String) jsonPayload.get(ClientConstants.ROOM_ID);
+    }
+
+    /**
+     * Join to a chat room.
+     *
+     * @param roomId - Room id.
+     * @throws IOException
+     */
+    private void joinRoom(String roomId) throws IOException {
+        Room room = ServerState.getServerState().getRoom(roomId);
+        if (room == null || room.getOwner().equals(currentIdentity)) {
+            logger.debug("Tried joining " + roomId + " room. Either room doesn't exist or requesting client is the current owner.");
+            JSONObject roomChangeRequest = buildRoomChangeJSON(currentIdentity, roomId, roomId);
+            Messaging.respond(roomChangeRequest, clientSocket);
+            return;
+        }
+        if (room.getServerId().equals(ServerState.getServerState().getServerId())) {
+            logger.debug("Room is hosted in the current server. Moving client: " + currentIdentity + " to room: " + roomId);
+            changeRoom(room);
+            return;
+        }
+
+        // Room is hosted in a different server. Send routing information to client.
+        String serverId = room.getServerId();
+        logger.debug("Room is hosted in the server: " + serverId);
+        Server server = ServerState.getServerState().getServerFromId(serverId);
+        sendRoutingRequest(roomId, server);
+    }
+
+    /**
+     * Send routing request back to client if the room is not in the same server.
+     *
+     * @param roomId - Room id.
+     * @param server - Server which hosts the room.
+     * @throws IOException
+     */
+    private void sendRoutingRequest(String roomId, Server server) throws IOException {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ClientConstants.TYPE, ClientConstants.ROUTE);
+        request.put(ClientConstants.HOST, server.getAddress());
+        request.put(ClientConstants.PORT, String.valueOf(server.getClientPort()));
+        request.put(ClientConstants.ROOM_ID, roomId);
+        JSONObject routeRequest = new JSONObject(request);
+        Messaging.respond(routeRequest, clientSocket);
+    }
+
+    /**
      * Inform servers about identity creation deletion.
      *
      * @param kind     - Kind.
@@ -357,8 +440,10 @@ public class ClientHandler extends Thread {
         logger.debug("Current room: " + currentRoom);
         if (!currentRoom.equals("")) {
             Room prevRoom = ServerState.getServerState().getRoom(currentRoom);
-            prevRoom.removeClient(this);
-            ServerState.getServerState().updateRoom(prevRoom);
+            if (prevRoom != null) {
+                prevRoom.removeClient(this);
+                ServerState.getServerState().updateRoom(prevRoom);
+            }
         }
         // Add client to new room.
         room.addClient(this);

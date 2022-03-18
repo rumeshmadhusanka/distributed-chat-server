@@ -66,7 +66,7 @@ public class ServerState {
                     this.coordinationPort = Integer.parseInt(params[3]);
                     logger.trace("Server created: " + serverId + " " + serverAddress + " " + clientsPort + " " + coordinationPort);
                 } else {
-                    Server server = new Server(params[0], params[1], Integer.parseInt(params[3]));
+                    Server server = new Server(params[0], params[1], Integer.parseInt(params[3]), Integer.parseInt(params[2]));
                     serversHashmap.put(server.getId(), server);
                 }
                 addRoomToMap(new Room(serverId, ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId));
@@ -92,7 +92,7 @@ public class ServerState {
             }
         }
         if (serverId.equals(this.serverId)) {
-            return new Server(this.serverId, this.serverAddress, this.coordinationPort); //todo check coordination port or clients port
+            return new Server(this.serverId, this.serverAddress, this.coordinationPort, this.clientsPort); //todo check coordination port or clients port
         }
         return null;
     }
