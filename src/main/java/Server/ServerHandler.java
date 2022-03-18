@@ -139,13 +139,13 @@ public class ServerHandler extends Thread {
         switch (type) {
             case ServerConstants.IDENTITY:
                 String identity = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
-                isAvailable = Consensus.verifyUniqueValue(identity, ServerConstants.IDENTITY);
+                isAvailable = Consensus.getConsensus().verifyUniqueValue(identity, ServerConstants.IDENTITY);
                 response = createRequestKindJSON(isAvailable, identity,
                         ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY);
                 break;
             case ServerConstants.ROOM_ID:
                 String roomId = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
-                isAvailable = Consensus.verifyUniqueValue(roomId, ServerConstants.ROOM_ID);
+                isAvailable = Consensus.getConsensus().verifyUniqueValue(roomId, ServerConstants.ROOM_ID);
                 response = createRequestKindJSON(isAvailable, roomId,
                         ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM);
         }

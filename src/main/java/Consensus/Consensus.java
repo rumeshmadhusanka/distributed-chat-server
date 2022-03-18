@@ -19,13 +19,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Consensus {
 
     private static final Logger logger = LogManager.getLogger(Consensus.class);
+    private static Consensus consensus;
+
+    private Consensus(){
+
+    }
+
+    public static Consensus getConsensus() {
+        if (consensus == null) {
+            synchronized (ServerState.class) {
+                if (consensus == null) {
+                    consensus = new Consensus();
+                }
+            }
+        }
+        return consensus;
+    }
 
     /**
      * Whether this server is the current leader
      *
      * @return boolean
      */
-    private static boolean isLeader() throws ServerException {
+    private boolean isLeader() throws ServerException {
         Leader currentLeader = ServerState.getServerState().getCurrentLeader();
         if (currentLeader == null) {
             logger.info("No elected leader present in ServerState.");
@@ -44,7 +60,7 @@ public class Consensus {
      * @param value   the value you want to verify whether it is unique or not
      * @param askType room | identity
      */
-    public static boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException, InterruptedException {
+    public boolean verifyUniqueValue(String value, String askType) throws IOException, ParseException, ServerException, InterruptedException {
         boolean isUnique = true;
         HashMap<String, String> request;
         try {
@@ -130,7 +146,7 @@ public class Consensus {
      *
      * @return - HashMap
      */
-    private static HashMap<String, String> createRequestMap() {
+    private HashMap<String, String> createRequestMap() {
         HashMap<String, String> request = new HashMap<>();
         request.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);
         return request;
