@@ -112,6 +112,12 @@ public class ClientHandler extends Thread {
         }
     }
 
+    /**
+     * Check whether a given string adheres to the criteria.
+     *
+     * @param value - Identity or Room id.
+     * @return - Boolean value.
+     */
     private boolean meetsCriteria(String value) {
         return ((value.length() < 3) || (value.length() > 16) || !Character.isLetter(value.charAt(0)));
     }
@@ -200,10 +206,7 @@ public class ClientHandler extends Thread {
      * Create new chat room.
      *
      * @param roomId - Room id sent by the client.
-     * @throws ServerException
      * @throws IOException
-     * @throws ParseException
-     * @throws InterruptedException
      */
     private void deleteRoom(String roomId) throws IOException {
         JSONObject response;
@@ -243,6 +246,12 @@ public class ClientHandler extends Thread {
         Messaging.respond(response, this.clientSocket);
     }
 
+    /**
+     * Check whether a given room is the main hall.
+     *
+     * @param roomId - Room id.
+     * @return - Boolean value.
+     */
     private boolean isMainHall(String roomId) {
         return roomId.equals(ServerState.getServerState().getMainHall().getRoomId());
     }
@@ -263,7 +272,7 @@ public class ClientHandler extends Thread {
     /**
      * Create a response JSON object for create room scenario.
      *
-     * @param type
+     * @param type - Approved type.
      * @param approved - Boolean value indicating whether the room id was approved or not.
      * @return -  Response JSON object.
      */
@@ -317,6 +326,13 @@ public class ClientHandler extends Thread {
         currentRoom = room.getRoomId();
     }
 
+    /**
+     * Inform a set of clients.
+     *
+     * @param clients Collection clients.
+     * @param roomId New joining room id.
+     * @throws IOException
+     */
     private void informClientChangeRoom(Collection<ClientHandler> clients, String roomId) throws IOException {
         for (ClientHandler client : clients) {
             if (client.getCurrentRoom().equals(this.currentRoom) || client.getCurrentRoom().equals(roomId)) {
