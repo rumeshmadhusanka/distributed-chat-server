@@ -51,7 +51,7 @@ public class Messaging {
      * @throws IOException
      */
     public static void respond(JSONObject obj, Socket socket) throws IOException {
-        logger.debug("Sending: " + obj.toJSONString());
+        logger.debug("Sending: " + obj.toJSONString() + " to :" + socket.getLocalPort());
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
         dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();

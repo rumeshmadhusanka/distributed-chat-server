@@ -15,6 +15,7 @@ public class ChatServerConstants {
 
         public static final String IDENTITY = "identity";
         public static final String ROOM_ID = "roomid";
+        public static final String ROOM_OWNER = "owner";
         public static final String SERVER_ID = "serverid";
 
         public static final String TYPE = "type";
@@ -73,6 +74,13 @@ public class ChatServerConstants {
         public static final String ROOM_ID = "roomid";
         public static final String CHANGE_ROOM = "roomchange";
         public static final String FORMER_ROOM = "former";
+        public static final String ROUTE = "route";
+        public static final String HOST = "host";
+        public static final String PORT = "port";
+        public static final String SERVER_CHANGE = "serverchange";
+        public static final String SERVER_ID = "serverid";
+
+        public static final String ANOTHER_SERVER = "anotherserver";
 
     }
 
