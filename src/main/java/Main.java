@@ -2,6 +2,7 @@ import ClientHandler.ClientHandler;
 import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ServerProperties;
+import Gossiping.FailureDetector;
 import Gossiping.HeartBeatSender;
 import Server.Room;
 import Server.ServerHandler;
@@ -77,7 +78,10 @@ public class Main {
         new Timer(true).schedule(timerTask, 0, 5000);
 
         //start the Heartbeat Sender
-        new Timer(true).schedule(new HeartBeatSender(),0, 3000);
+        new Timer(true).schedule(new HeartBeatSender(), 0, ServerProperties.HEARTBEAT_PERIOD);
+
+        // start failure detector
+        new Timer(true).schedule(new FailureDetector(), ServerProperties.HEARTBEAT_PERIOD * 2L, ServerProperties.FAILURE_DETECTION_PERIOD);
 
         // Start ClientHandler.
         while (true) {
