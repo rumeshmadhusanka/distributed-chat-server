@@ -15,6 +15,7 @@ public class ChatServerConstants {
 
         public static final String IDENTITY = "identity";
         public static final String ROOM_ID = "roomid";
+        public static final String ROOM_OWNER = "owner";
         public static final String SERVER_ID = "serverid";
 
         public static final String TYPE = "type";

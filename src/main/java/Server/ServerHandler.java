@@ -75,20 +75,28 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_GOSSIP:
                 switch (kind) {
                     case ServerConstants.KIND_INFORM_NEW_IDENTITY:
-                        // TODO: Inform servers
+                        addNewIdentity(jsonPayload);
+                        break;
+
                     case ServerConstants.KIND_INFORM_DELETE_IDENTITY:
-                        // TODO: Inform servers
+                        deleteIdentity(jsonPayload);
+                        break;
+
                     case ServerConstants.KIND_INFORM_NEW_ROOM:
-                        // TODO: Inform servers
+                        addNewRoom(jsonPayload);
+                        break;
+
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
-                        // TODO: Inform servers
+                        deleteRoom(jsonPayload);
+                        break;
+
                 }
                 break;
             case ServerConstants.TYPE_BULLY:
                 switch (kind) {
                     case ServerConstants.KIND_ELECTION:
                         // This server received an ELECTION message
-                        logger.trace("Received bully to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.trace("Received bully to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.replyOKorPass(jsonPayload, serverSocket);
 //                    case ServerConstants.KIND_OK:
 //                        // This server received an OK message
@@ -98,16 +106,76 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
                         // TODO
-                        logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
                     case ServerConstants.KIND_COORDINATOR:
-                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId()+" by: "+jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
                 }
         }
     }
 
-    private void verifyUnique(JSONObject jsonPayload) throws IOException{
+    /**
+     * Add newly created identity.
+     *
+     * @param jsonPayload - JSON payload.
+     */
+    private void addNewIdentity(JSONObject jsonPayload) {
+        String identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
+        ServerState.getServerState().addIdentity(identity);
+    }
+
+    /**
+     * Remove delete identity from the list.
+     *
+     * @param jsonPayload - JSON payload.
+     */
+    private void deleteIdentity(JSONObject jsonPayload) {
+        String identity;
+        identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
+        ServerState.getServerState().deleteIdentity(identity);
+    }
+
+    /**
+     * Add newly created room.
+     *
+     * @param jsonPayload - JSON payload.
+     */
+    private void addNewRoom(JSONObject jsonPayload) {
+        Room newRoom = getRoomFromRequest(jsonPayload);
+        ServerState.getServerState().addRoomToMap(newRoom);
+    }
+
+    /**
+     * Remove deleted room from the hashmap.
+     *
+     * @param jsonPayload - JSON payload.
+     */
+    private void deleteRoom(JSONObject jsonPayload) {
+        Room delRoom = getRoomFromRequest(jsonPayload);
+        ServerState.getServerState().removeRoom(delRoom);
+    }
+
+    /**
+     * Extract room from a JSON payload.
+     *
+     * @param jsonPayload - JSON payload.
+     * @return - Room object.
+     */
+    private Room getRoomFromRequest(JSONObject jsonPayload) {
+        String roomId = (String) jsonPayload.get(ServerConstants.ROOM_ID);
+        String serverId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
+        String owner = (String) jsonPayload.get(ServerConstants.ROOM_OWNER);
+        return new Room(serverId, roomId, owner);
+    }
+
+    /**
+     * Verify whether the given value is unique or not.
+     *
+     * @param jsonPayload - JSON payload.
+     * @throws IOException
+     */
+    private void verifyUnique(JSONObject jsonPayload) throws IOException {
         String value;
         String valueType;
         boolean isAvailable;
@@ -130,6 +198,16 @@ public class ServerHandler extends Thread {
         Messaging.respond(new JSONObject(responseMap), serverSocket);
     }
 
+    /**
+     * Handle request to create.
+     *
+     * @param jsonPayload - JSON payload.
+     * @param type        - Type of the request.
+     * @throws ServerException
+     * @throws IOException
+     * @throws ParseException
+     * @throws InterruptedException
+     */
     private void handleRequestToCreate(JSONObject jsonPayload, String type) throws ServerException, IOException, ParseException, InterruptedException {
         boolean isAvailable;
         JSONObject response = null;
@@ -153,10 +231,16 @@ public class ServerHandler extends Thread {
                     ServerExceptionConstants.INTERNAL_SERVER_ERROR_MSG,
                     ServerExceptionConstants.INTERNAL_SERVER_ERROR_CODE);
         }
-
-
     }
 
+    /**
+     * Create a JSON object.
+     *
+     * @param isAvailable - Indicating whether the value is available.
+     * @param value       - Value.
+     * @param type        - Type of the value.
+     * @return - JSONObject.
+     */
     private JSONObject createRequestKindJSON(boolean isAvailable, String value, String type) {
         HashMap<String, String> responseMap = new HashMap<>();
         responseMap.put(ServerConstants.TYPE, ServerConstants.TYPE_CONSENSUS);

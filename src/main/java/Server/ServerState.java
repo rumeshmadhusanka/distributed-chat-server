@@ -200,4 +200,8 @@ public class ServerState {
     public boolean hasIdentity(String identity) {
         return identityList.contains(identity);
     }
+
+    public void deleteIdentity(String identity) {
+        identityList.remove(identity);
+    }
 }

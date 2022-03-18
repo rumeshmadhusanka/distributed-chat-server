@@ -1,11 +1,12 @@
 package ClientHandler;
 
 import Consensus.Consensus;
-import Constants.ChatServerConstants;
 import Constants.ChatServerConstants.ClientConstants;
+import Constants.ChatServerConstants.ServerConstants;
 import Exception.ServerException;
 import Messaging.Messaging;
 import Server.Room;
+import Server.Server;
 import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -140,7 +141,7 @@ public class ClientHandler extends Thread {
         }
 
         // Verify identity.
-        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(identity, ChatServerConstants.ServerConstants.IDENTITY);
+        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(identity, ServerConstants.IDENTITY);
         logger.debug("New identity availability: " + isAvailable);
         if (!isAvailable) {
             response = buildApprovedJSONId(ClientConstants.FALSE);
@@ -160,6 +161,9 @@ public class ClientHandler extends Thread {
         Room mainHall = ServerState.getServerState().getMainHall();
         // Add client to the main hall.
         changeRoom(mainHall);
+
+        // Inform servers about new identity.
+        informServersIdentity(ServerConstants.KIND_INFORM_NEW_IDENTITY, identity);
     }
 
     /**
@@ -182,7 +186,7 @@ public class ClientHandler extends Thread {
         }
 
         // Verify room id.
-        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(roomId, ChatServerConstants.ServerConstants.ROOM_ID);
+        boolean isAvailable = Consensus.getConsensus().verifyUniqueValue(roomId, ServerConstants.ROOM_ID);
         logger.debug("New room id availability: " + isAvailable);
         if (!isAvailable) {
             response = buildApprovedJSONRoom(ClientConstants.TYPE_CREATE_ROOM, ClientConstants.FALSE, roomId);
@@ -200,6 +204,9 @@ public class ClientHandler extends Thread {
 
         // Change room of the client.
         changeRoom(ServerState.getServerState().getRoom(roomId));
+
+        // Inform servers about new room.
+        informServersRoom(ServerConstants.KIND_INFORM_NEW_ROOM, roomId);
     }
 
     /**
@@ -244,6 +251,42 @@ public class ClientHandler extends Thread {
         // Send appropriate response back to client.
         response = buildApprovedJSONRoom(ClientConstants.TYPE_DELETE_ROOM, ClientConstants.TRUE, roomId);
         Messaging.respond(response, this.clientSocket);
+
+        // Inform servers about delete room.
+        informServersRoom(ServerConstants.KIND_INFORM_DELETE_ROOM, roomId);
+    }
+
+    /**
+     * Inform servers about identity creation deletion.
+     *
+     * @param kind     - Kind.
+     * @param identity - Identity.
+     */
+    private void informServersIdentity(String kind, String identity) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ServerConstants.TYPE, ServerConstants.TYPE_GOSSIP);
+        request.put(ServerConstants.KIND, kind);
+        request.put(ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ServerConstants.IDENTITY, identity);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        Messaging.sendAndForget(new JSONObject(request), servers);
+    }
+
+    /**
+     * Inform servers about room creation/ deletion.
+     *
+     * @param kind   - Kind.
+     * @param roomId - Room Id.
+     */
+    private void informServersRoom(String kind, String roomId) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ServerConstants.TYPE, ServerConstants.TYPE_GOSSIP);
+        request.put(ServerConstants.KIND, kind);
+        request.put(ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ServerConstants.ROOM_ID, roomId);
+        request.put(ServerConstants.ROOM_OWNER, currentIdentity);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        Messaging.sendAndForget(new JSONObject(request), servers);
     }
 
     /**
@@ -272,7 +315,7 @@ public class ClientHandler extends Thread {
     /**
      * Create a response JSON object for create room scenario.
      *
-     * @param type - Approved type.
+     * @param type     - Approved type.
      * @param approved - Boolean value indicating whether the room id was approved or not.
      * @return -  Response JSON object.
      */
@@ -330,7 +373,7 @@ public class ClientHandler extends Thread {
      * Inform a set of clients.
      *
      * @param clients Collection clients.
-     * @param roomId New joining room id.
+     * @param roomId  New joining room id.
      * @throws IOException
      */
     private void informClientChangeRoom(Collection<ClientHandler> clients, String roomId) throws IOException {
