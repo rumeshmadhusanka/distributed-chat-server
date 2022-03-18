@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Scanner;
 
 
 public class ClientHandler extends Thread {
@@ -202,7 +205,7 @@ public class ClientHandler extends Thread {
      * @throws ParseException
      * @throws InterruptedException
      */
-    private void deleteRoom(String roomId) throws ServerException, IOException, ParseException, InterruptedException {
+    private void deleteRoom(String roomId) throws IOException {
         JSONObject response;
 
         // Get room from server state.
@@ -300,7 +303,7 @@ public class ClientHandler extends Thread {
         logger.debug("Changing client room to: " + room.getRoomId());
         // Remove client from previous room.
         logger.debug("Current room: " + currentRoom);
-        if(!currentRoom.equals("")){
+        if (!currentRoom.equals("")) {
             Room prevRoom = ServerState.getServerState().getRoom(currentRoom);
             prevRoom.removeClient(this);
             ServerState.getServerState().updateRoom(prevRoom);
