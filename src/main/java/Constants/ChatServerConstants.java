@@ -87,6 +87,8 @@ public class ChatServerConstants {
         public static final String ROOM_CONTENT = "roomcontents";
         public static final String IDENTITIES = "identities";
 
+        public static final String CONTENT = "content";
+
     }
 
     public static class ServerExceptionConstants {

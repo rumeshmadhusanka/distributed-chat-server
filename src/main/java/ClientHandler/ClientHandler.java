@@ -98,8 +98,8 @@ public class ClientHandler extends Thread {
                 break;
 
             case ClientConstants.TYPE_MESSAGE:
-                logger.debug("Message received.");
-                //TODO: Implement Message sending.
+                // Broadcast message received by the client.
+                broadcastMessage(jsonPayload);
                 break;
 
             case ClientConstants.TYPE_MOVE_JOIN:
@@ -115,6 +115,33 @@ public class ClientHandler extends Thread {
                 logger.debug("Sending users in the room " + currentRoom + " to " + currentIdentity);
                 sendIdentitiesInRoom();
                 break;
+        }
+    }
+
+    /**
+     * Broadcast a received message to all the clients in the connected room.
+     *
+     * @param jsonPayload
+     */
+    private void broadcastMessage(JSONObject jsonPayload) {
+        String message = (String) jsonPayload.get(ClientConstants.CONTENT);
+        if (message != null && (!message.isBlank())) {
+            logger.debug("'" + message + "' received from " + currentIdentity);
+            // Create message broadcast object
+            HashMap<String, String> messageBroadcast = new HashMap<>();
+            messageBroadcast.put(ClientConstants.TYPE, ClientConstants.TYPE_MESSAGE);
+            messageBroadcast.put(ClientConstants.IDENTITY, currentIdentity);
+            messageBroadcast.put(ClientConstants.CONTENT, message);
+
+            // Broadcast message to client in the room.
+            Room chatRoom = ServerState.getServerState().getRoom(currentRoom);
+            Collection<ClientHandler> clients = chatRoom.getClientIdentityList();
+            for (ClientHandler client : clients) {
+                // Check for self object.
+                if (client.getId() != this.getId()) {
+                    Messaging.respond(new JSONObject(messageBroadcast), client.getClientSocket());
+                }
+            }
         }
     }
 
