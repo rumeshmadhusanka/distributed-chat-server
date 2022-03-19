@@ -4,7 +4,6 @@ import ClientHandler.ClientHandler;
 import Consensus.Leader;
 import Consensus.LeaderElection;
 import Constants.ChatServerConstants;
-import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,7 +70,6 @@ public class ServerState {
                 }
                 String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + serverId;
                 addRoomToMap(new Room(serverId, mainHallId));
-                Util.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_NEW_ROOM, mainHallId, "");
             }
             //create main hall chatroom
 

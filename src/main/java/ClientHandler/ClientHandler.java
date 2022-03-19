@@ -99,7 +99,7 @@ public class ClientHandler extends Thread {
 
             case ClientConstants.TYPE_MESSAGE:
                 logger.debug("Message received.");
-                //TODO:
+                //TODO: Implement Message sending.
                 break;
 
             case ClientConstants.TYPE_MOVE_JOIN:
@@ -128,12 +128,12 @@ public class ClientHandler extends Thread {
             roomIdList.add(roomlist.nextElement());
         }
 
-//        Collection<Server> servers = ServerState.getServerState().getServers();
-//        // Add main halls of the rest of the server.
-//        // TODO: Handle failed servers or broadcast Main Halls of the servers as well.
-//        for (Server server : servers) {
-//            roomIdList.add(ServerConstants.MAIN_HALL + server.getId());
-//        }
+        // TODO: Get Active servers.
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        // Add main halls of the rest of the server.
+        for (Server server : servers) {
+            roomIdList.add(ServerConstants.MAIN_HALL + server.getId());
+        }
 
         HashMap<String, Object> response = new HashMap<>();
         response.put(ClientConstants.TYPE, ClientConstants.ROOM_LIST);
