@@ -54,20 +54,5 @@ public class Server implements Comparable<Server> {
         }
     }
 
-//    public static void main(String[] args) {
-//        Server s1 = new Server("100","abc",1234);
-//        Server s2 = new Server("101","pqr",12345);
-//        Server s3 = new Server("105","pqr",12345);
-//
-//        Collection<Server> servers = List.of(s1,s2,s3);
-//        Collection<Server> noServers = List.of();
-//        System.out.println(s1.compareTo(s2));
-//        ServerComparator sc = new ServerComparator();
-//        System.out.println(sc.compare(s1,s2));
-//        Server m1 = servers.stream().max(sc).stream().findFirst().orElse(null);
-//        System.out.println(m1.id);
-//        Server m2 = noServers.stream().max(sc).stream().findFirst().orElse(null);
-//        System.out.println(m2);
-//    }
 }
 

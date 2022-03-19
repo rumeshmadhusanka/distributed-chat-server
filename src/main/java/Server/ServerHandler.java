@@ -38,7 +38,7 @@ public class ServerHandler extends Thread {
             InputStream inputFromClient = serverSocket.getInputStream();
             Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
             String line = serverInputScanner.nextLine();
-//            logger.trace("Received: " + line);
+            logger.trace("Received: " + line);
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
@@ -102,11 +102,6 @@ public class ServerHandler extends Thread {
                         // This server received an ELECTION message
                         logger.trace("Received bully to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.replyOKorPass(jsonPayload, serverSocket);
-//                    case ServerConstants.KIND_OK:
-//                        // This server received an OK message
-//                        // This server must be the election starter; TODO handle exception if not
-//                        // Add the ok message sender to the ok message list
-//                        logger.trace("Received OK to: " + ServerState.getServerState().getServerId());
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
                         // TODO
@@ -177,7 +172,6 @@ public class ServerHandler extends Thread {
      * Verify whether the given value is unique or not.
      *
      * @param jsonPayload - JSON payload.
-     * @throws IOException
      */
     private void verifyUnique(JSONObject jsonPayload) {
         String value;
