@@ -8,6 +8,7 @@ import Messaging.Messaging;
 import Server.Room;
 import Server.Server;
 import Server.ServerState;
+import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -17,10 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 
 public class ClientHandler extends Thread {
@@ -95,11 +93,13 @@ public class ClientHandler extends Thread {
                 break;
 
             case ClientConstants.TYPE_LIST:
-                logger.debug("Sending users in room");
+                logger.debug("Sending " + currentIdentity + " room list in the system.");
+                sendRoomIdsInSystem();
                 break;
 
             case ClientConstants.TYPE_MESSAGE:
                 logger.debug("Message received.");
+                //TODO:
                 break;
 
             case ClientConstants.TYPE_MOVE_JOIN:
@@ -112,8 +112,54 @@ public class ClientHandler extends Thread {
                 break;
 
             case ClientConstants.TYPE_WHO:
+                logger.debug("Sending users in the room " + currentRoom + " to " + currentIdentity);
+                sendIdentitiesInRoom();
                 break;
         }
+    }
+
+    /**
+     * Send room ids in the system.
+     */
+    private void sendRoomIdsInSystem() {
+        ArrayList<String> roomIdList = new ArrayList<>();
+        Enumeration<String> roomlist = ServerState.getServerState().getRoomsIds();
+        while (roomlist.hasMoreElements()) {
+            roomIdList.add(roomlist.nextElement());
+        }
+
+//        Collection<Server> servers = ServerState.getServerState().getServers();
+//        // Add main halls of the rest of the server.
+//        // TODO: Handle failed servers or broadcast Main Halls of the servers as well.
+//        for (Server server : servers) {
+//            roomIdList.add(ServerConstants.MAIN_HALL + server.getId());
+//        }
+
+        HashMap<String, Object> response = new HashMap<>();
+        response.put(ClientConstants.TYPE, ClientConstants.ROOM_LIST);
+        response.put(ClientConstants.ROOMS, roomIdList);
+        Messaging.respond(new JSONObject(response), clientSocket);
+    }
+
+    /**
+     * Send identities in the current chat room back to client.
+     */
+    private void sendIdentitiesInRoom() {
+        // Get room and its clients from the ServerState.
+        Room room = ServerState.getServerState().getRoom(currentRoom);
+        Collection<ClientHandler> clients = room.getClientIdentityList();
+        // Add client identities into arraylist.
+        ArrayList<String> identityList = new ArrayList<>();
+        for (ClientHandler client : clients) {
+            identityList.add(client.getCurrentIdentity());
+        }
+        // Send response back to client.
+        HashMap<String, Object> response = new HashMap<>();
+        response.put(ClientConstants.TYPE, ClientConstants.ROOM_CONTENT);
+        response.put(ClientConstants.ROOM_ID, currentRoom);
+        response.put(ServerConstants.ROOM_OWNER, room.getOwner());
+        response.put(ClientConstants.IDENTITIES, identityList);
+        Messaging.respond(new JSONObject(response), clientSocket);
     }
 
     /**
@@ -285,7 +331,7 @@ public class ClientHandler extends Thread {
         changeRoom(ServerState.getServerState().getRoom(roomId));
 
         // Inform servers about new room.
-        informServersRoom(ServerConstants.KIND_INFORM_NEW_ROOM, roomId);
+        Util.informServersRoom(ServerConstants.KIND_INFORM_NEW_ROOM, roomId, currentIdentity);
     }
 
     /**
@@ -335,7 +381,7 @@ public class ClientHandler extends Thread {
         Messaging.respond(response, this.clientSocket);
 
         // Inform servers about delete room.
-        informServersRoom(ServerConstants.KIND_INFORM_DELETE_ROOM, roomId);
+        Util.informServersRoom(ServerConstants.KIND_INFORM_DELETE_ROOM, roomId, currentIdentity);
     }
 
     /**
@@ -402,23 +448,6 @@ public class ClientHandler extends Thread {
         request.put(ServerConstants.KIND, kind);
         request.put(ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
         request.put(ServerConstants.IDENTITY, identity);
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        Messaging.sendAndForget(new JSONObject(request), servers);
-    }
-
-    /**
-     * Inform servers about room creation/ deletion.
-     *
-     * @param kind   - Kind.
-     * @param roomId - Room Id.
-     */
-    private void informServersRoom(String kind, String roomId) {
-        HashMap<String, String> request = new HashMap<>();
-        request.put(ServerConstants.TYPE, ServerConstants.TYPE_GOSSIP);
-        request.put(ServerConstants.KIND, kind);
-        request.put(ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
-        request.put(ServerConstants.ROOM_ID, roomId);
-        request.put(ServerConstants.ROOM_OWNER, currentIdentity);
         Collection<Server> servers = ServerState.getServerState().getServers();
         Messaging.sendAndForget(new JSONObject(request), servers);
     }

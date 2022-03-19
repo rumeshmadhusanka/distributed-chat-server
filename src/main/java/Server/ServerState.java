@@ -4,15 +4,13 @@ import ClientHandler.ClientHandler;
 import Consensus.Leader;
 import Consensus.LeaderElection;
 import Constants.ChatServerConstants;
+import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -71,7 +69,9 @@ public class ServerState {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]), Integer.parseInt(params[2]));
                     serversHashmap.put(server.getId(), server);
                 }
-                addRoomToMap(new Room(serverId, ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId));
+                String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + serverId;
+                addRoomToMap(new Room(serverId, mainHallId));
+                Util.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_NEW_ROOM, mainHallId, "");
             }
             //create main hall chatroom
 
@@ -103,8 +103,8 @@ public class ServerState {
         return serverId;
     }
 
-    public ConcurrentHashMap<String, Room> getRoomsHashMap() {
-        return roomsHashMap;
+    public Enumeration<String> getRoomsIds() {
+        return roomsHashMap.keys();
     }
 
     public Room getRoom(String roomId) {
@@ -124,7 +124,7 @@ public class ServerState {
     }
 
     public Room getMainHall() {
-        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId);
+        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + serverId);
     }
 
     public String getServerAddress() {

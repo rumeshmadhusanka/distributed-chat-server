@@ -10,7 +10,7 @@ public class ChatServerConstants {
      */
     public static class ServerConstants{
 
-        public static final String MAIN_HALL = "MainHall";
+        public static final String MAIN_HALL = "MainHall-";
         public static final String UNIQUE = "unique";
 
         public static final String IDENTITY = "identity";
@@ -81,7 +81,11 @@ public class ChatServerConstants {
         public static final String SERVER_CHANGE = "serverchange";
         public static final String SERVER_ID = "serverid";
 
-        public static final String ANOTHER_SERVER = "anotherserver";
+        public static final String ROOM_LIST = "roomlist";
+        public static final String ROOMS = "rooms";
+
+        public static final String ROOM_CONTENT = "roomcontents";
+        public static final String IDENTITIES = "identities";
 
     }
 
