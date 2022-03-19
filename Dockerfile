@@ -1,7 +1,7 @@
 FROM maven:3.8.4-eclipse-temurin-11 AS build-image
 WORKDIR /app
-COPY pom.xml pom.xml
-RUN mvn dependency:go-offline -B -T 3C
+COPY ./pom.xml ./pom.xml
+RUN mvn dependency:go-offline -B
 COPY ./src ./src
 RUN mvn package
 
