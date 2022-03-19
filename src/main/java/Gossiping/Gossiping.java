@@ -4,12 +4,15 @@ import Constants.ChatServerConstants.ServerConstants;
 import Messaging.Messaging;
 import Server.ServerState;
 import Utilities.Util;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Gossiping {
+    private static final Logger logger = LogManager.getLogger(Gossiping.class);
 
     public static synchronized void receiveHeartBeat(JSONObject request) {
         long receivedTimestamp = Long.parseLong((String) request.get(ServerConstants.TIMESTAMP));
@@ -22,6 +25,7 @@ public class Gossiping {
                 forwardHeartBeat(request);
             }
         } else {
+            logger.debug("Discovered server through Gossiping. Server id: "+ serverId);
             heartBeatMap.put(serverId, receivedTimestamp);
             forwardHeartBeat(request);
         }
