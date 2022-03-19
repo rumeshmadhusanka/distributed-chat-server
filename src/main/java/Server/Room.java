@@ -40,11 +40,4 @@ public class Room {
     }
 
     public void removeClient(ClientHandler clientHandler) { clientIdentityList.remove(clientHandler);}
-
-    public boolean isMainHall() {
-        if (this.roomId.equals(ChatServerConstants.ServerConstants.MAIN_HALL+"-"+this.serverId)){
-            return true;
-        }
-        return false;
-    }
 }

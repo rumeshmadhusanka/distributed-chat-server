@@ -99,7 +99,7 @@ public class LeaderElection {
      *
      * @param request JSON request
      */
-    public static void replyOKorPass(JSONObject request, Socket socket) throws IOException {
+    public static void replyOKorPass(JSONObject request, Socket socket) {
         electionFlag = true;
         ServerState.getServerState().setCurrentLeader(null);
         String electionStarterId = (String) request.get(ServerConstants.SERVER_ID);

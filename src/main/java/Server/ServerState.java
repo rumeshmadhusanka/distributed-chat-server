@@ -9,10 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -71,7 +68,8 @@ public class ServerState {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]), Integer.parseInt(params[2]));
                     serversHashmap.put(server.getId(), server);
                 }
-                addRoomToMap(new Room(serverId, ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId));
+                String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + serverId;
+                addRoomToMap(new Room(serverId, mainHallId));
             }
             //create main hall chatroom
 
@@ -103,8 +101,8 @@ public class ServerState {
         return serverId;
     }
 
-    public ConcurrentHashMap<String, Room> getRoomsHashMap() {
-        return roomsHashMap;
+    public Enumeration<String> getRoomsIds() {
+        return roomsHashMap.keys();
     }
 
     public Room getRoom(String roomId) {
@@ -124,7 +122,7 @@ public class ServerState {
     }
 
     public Room getMainHall() {
-        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + "-" + serverId);
+        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + serverId);
     }
 
     public String getServerAddress() {
@@ -141,6 +139,10 @@ public class ServerState {
 
     public void addClientHandler(ClientHandler clientHandler) {
         clientHandlerHashMap.put(clientHandler.getId(), clientHandler);
+    }
+
+    public void removeClientHandler(ClientHandler clientHandler) {
+        clientHandlerHashMap.remove(clientHandler.getId(), clientHandler);
     }
 
     public ConcurrentHashMap<Long, ClientHandler> getClientHandlerHashMap() {
@@ -217,5 +219,19 @@ public class ServerState {
 
     public void setMyHeartBeat(long myHeartBeat) {
         this.myHeartBeat = myHeartBeat;
+    }
+    
+    public Collection<Server> getActiveServers() {
+        // active servers are maintained at the heartbeat map
+        ArrayList<String> serverIds = new ArrayList<>(getHeartbeatMap().keySet());
+        Collection<Server> output = new ArrayList<>();
+        for (Server server : getServers()) {
+            for (String id : serverIds) {
+                if (server.getId().equals(id)) {
+                    output.add(server);
+                }
+            }
+        }
+        return output;
     }
 }

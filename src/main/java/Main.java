@@ -1,10 +1,7 @@
 import ClientHandler.ClientHandler;
-import Consensus.LeaderElection;
-import Constants.ChatServerConstants.ServerConstants;
 import Constants.ServerProperties;
 import Gossiping.FailureDetector;
 import Gossiping.HeartBeatSender;
-import Server.Room;
 import Server.ServerHandler;
 import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +12,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,12 +21,13 @@ public class Main {
     public static void main(String[] args) throws IOException {
         //TODO Every server socket should bind to the 0.0.0.0 when deploying to GCP/AWS. Other server's external ips should be stored in Server objects
 
+        //initialize server properties
+        ServerProperties.init();
+
         // Initialize server state.
         logger.info("Server Id: " + args[0] + "Conf file path:" + args[1]);
         ServerState.getServerState().initialize(args[0], args[1]);
 
-        //initialize server properties
-        ServerProperties.init();
         // ServerSocket for coordination.
         ServerSocket serverCoordinationSocket = new ServerSocket();
         SocketAddress coordinationEndpoint = new InetSocketAddress(
