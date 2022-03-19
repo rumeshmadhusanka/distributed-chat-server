@@ -21,7 +21,7 @@ public class Consensus {
     private static final Logger logger = LogManager.getLogger(Consensus.class);
     private static Consensus consensus;
 
-    private Consensus(){
+    private Consensus() {
 
     }
 
