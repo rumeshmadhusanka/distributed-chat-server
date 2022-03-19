@@ -5,7 +5,6 @@ import Constants.ChatServerConstants;
 import Constants.ServerProperties;
 import Exception.ServerException;
 import Server.Server;
-import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -48,13 +47,16 @@ public class Messaging {
      *
      * @param obj    - Response as a json object
      * @param socket - Socket of the receiver.
-     * @throws IOException
      */
-    public static void respond(JSONObject obj, Socket socket) throws IOException {
-        logger.debug("Sending: " + obj.toJSONString() + " to :" + socket.getLocalPort());
-        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-        dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-        dataOutputStream.flush();
+    public static void respond(JSONObject obj, Socket socket) {
+        try {
+            logger.debug("Sending: " + obj.toJSONString() + " to :" + socket.getLocalPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((obj.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
+        } catch (IOException exception) {
+            logger.debug("Socket closed for: " + socket.getInetAddress());
+        }
     }
 
     /**
@@ -116,6 +118,7 @@ public class Messaging {
 
     public static JSONObject contactLeader(JSONObject request, Leader leader) throws ServerException, IOException, ParseException {
 
+        logger.debug("Sending request: " + request.toJSONString());
         Socket socket = new Socket(leader.getAddress(), leader.getPort());
         socket.setSoTimeout((int) ServerProperties.CONN_TIMEOUT);
         try {

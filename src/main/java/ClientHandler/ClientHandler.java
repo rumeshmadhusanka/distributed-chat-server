@@ -52,9 +52,11 @@ public class ClientHandler extends Thread {
                 logger.debug("Received: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
-            logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " disconnected.");
+            // Client sent quit or got disconnected.
+            removeClientFromServer();
+
         } catch (IOException | ParseException | ServerException | InterruptedException e) {
-            logger.info(e.getMessage());
+            logger.debug(e.getMessage());
         }
     }
 
@@ -115,6 +117,43 @@ public class ClientHandler extends Thread {
     }
 
     /**
+     * Remove client from current room and client handler from server state.
+     * Delete any rooms that client is owner of.
+     *
+     * @throws IOException
+     */
+    private void removeClientFromServer() throws IOException {
+        logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " disconnecting.");
+        if (currentIdentity != null) {
+            logger.debug("Lost connection to: " + currentIdentity);
+
+            // Inform clients in the current room about quitting.
+            Collection<ClientHandler> clients = ServerState.getServerState().getClientsInRoom(currentRoom);
+            informClientChangeRoom(clients, "");
+
+            // Remove client from server state.
+            logger.debug("Removing identity and client handler from ServerState");
+            ServerState.getServerState().deleteIdentity(currentIdentity);
+            ServerState.getServerState().removeClientHandler(this);
+
+            // Informing servers about deleted identity.
+            informServersIdentity(ServerConstants.KIND_INFORM_DELETE_IDENTITY, currentIdentity);
+
+            // Remove client information from current room.
+            Room room = ServerState.getServerState().getRoom(currentRoom);
+            logger.debug("Current room:" + currentRoom);
+            if (room.getOwner().equals(currentIdentity)) {
+                logger.debug("Deleting room: " + currentRoom + " since it is owned by " + currentIdentity);
+                deleteRoom(room.getRoomId());
+            } else {
+                logger.debug("Removing identity from room: " + currentRoom);
+                room.removeClient(this);
+                ServerState.getServerState().updateRoom(room);
+            }
+        }
+    }
+
+    /**
      * Handle movejoin.
      *
      * @param jsonPayload - JSON payload.
@@ -143,10 +182,8 @@ public class ClientHandler extends Thread {
 
     /**
      * Confirm about server change.
-     *
-     * @throws IOException
      */
-    private void informServerChange() throws IOException {
+    private void informServerChange() {
         logger.debug("Sending server change confirmation.");
         HashMap<String, String> request = new HashMap<>();
         request.put(ClientConstants.TYPE, ClientConstants.SERVER_CHANGE);
@@ -255,9 +292,8 @@ public class ClientHandler extends Thread {
      * Create new chat room.
      *
      * @param roomId - Room id sent by the client.
-     * @throws IOException
      */
-    private void deleteRoom(String roomId) throws IOException {
+    private void deleteRoom(String roomId) {
         JSONObject response;
 
         // Get room from server state.
@@ -278,6 +314,7 @@ public class ClientHandler extends Thread {
         // Move all the client in the room to main hall.
         for (ClientHandler client : roomClients) {
             mainHall.addClient(client);
+            client.setCurrentRoom(mainHall.getRoomId());
             JSONObject roomChangeRequest = buildRoomChangeJSON(
                     client.getCurrentIdentity(), room.getRoomId(), mainHall.getRoomId());
             Messaging.respond(roomChangeRequest, client.getClientSocket());
@@ -287,6 +324,9 @@ public class ClientHandler extends Thread {
 
         // Inform clients in main hall.
         informClientChangeRoom(tempRoomClients, mainHall.getRoomId());
+
+        // Set current room.
+        currentRoom = mainHall.getRoomId();
 
         // Remove the room from ServerState.
         ServerState.getServerState().removeRoom(room);
@@ -312,9 +352,8 @@ public class ClientHandler extends Thread {
      * Join to a chat room.
      *
      * @param roomId - Room id.
-     * @throws IOException
      */
-    private void joinRoom(String roomId) throws IOException {
+    private void joinRoom(String roomId) {
         Room room = ServerState.getServerState().getRoom(roomId);
         if (room == null || room.getOwner().equals(currentIdentity)) {
             logger.debug("Tried joining " + roomId + " room. Either room doesn't exist or requesting client is the current owner.");
@@ -340,9 +379,8 @@ public class ClientHandler extends Thread {
      *
      * @param roomId - Room id.
      * @param server - Server which hosts the room.
-     * @throws IOException
      */
-    private void sendRoutingRequest(String roomId, Server server) throws IOException {
+    private void sendRoutingRequest(String roomId, Server server) {
         HashMap<String, String> request = new HashMap<>();
         request.put(ClientConstants.TYPE, ClientConstants.ROUTE);
         request.put(ClientConstants.HOST, server.getAddress());
@@ -444,9 +482,8 @@ public class ClientHandler extends Thread {
      * Change the room of an identity to a given room.
      *
      * @param room - Room to be assigned to.
-     * @throws IOException
      */
-    private void changeRoom(Room room) throws IOException {
+    private void changeRoom(Room room) {
 
         logger.debug("Changing client room to: " + room.getRoomId());
         // Remove client from previous room.
@@ -472,11 +509,11 @@ public class ClientHandler extends Thread {
      *
      * @param clients Collection clients.
      * @param roomId  New joining room id.
-     * @throws IOException
      */
-    private void informClientChangeRoom(Collection<ClientHandler> clients, String roomId) throws IOException {
+    private void informClientChangeRoom(Collection<ClientHandler> clients, String roomId) {
         for (ClientHandler client : clients) {
-            if (client.getCurrentRoom().equals(this.currentRoom) || client.getCurrentRoom().equals(roomId)) {
+            if (client.getCurrentRoom().equals(currentRoom) || client.getCurrentRoom().equals(roomId)) {
+                logger.debug("Informing about room change of " + currentIdentity + " to " + client.currentIdentity);
                 JSONObject roomChangeRequest = buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
                 Messaging.respond(roomChangeRequest, client.getClientSocket());
             }
@@ -489,6 +526,10 @@ public class ClientHandler extends Thread {
 
     public String getCurrentRoom() {
         return currentRoom;
+    }
+
+    public void setCurrentRoom(String currentRoom) {
+        this.currentRoom = currentRoom;
     }
 
     public Socket getClientSocket() {

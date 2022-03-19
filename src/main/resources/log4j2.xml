@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+    <CustomLevels>
+        <CustomLevel name="HEARTBEAT" intLevel="350" />
+    </CustomLevels>
+
     <Appenders>
         <Console name="SlowConsole" target="SYSTEM_OUT">
             <PatternLayout
@@ -8,7 +12,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Root level="TRACE">
+        <Root level="DEBUG">
             <AppenderRef ref="SlowConsole"/>
         </Root>
     </Loggers>

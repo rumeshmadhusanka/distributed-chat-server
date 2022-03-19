@@ -57,6 +57,7 @@ public class ChatServerConstants {
     public static class ClientConstants {
         public static final String TYPE = "type";
         public static final String TYPE_CREATE_ID = "newidentity";
+        public static final String TYPE_DELETE_ID = "deleteidentity";
         public static final String TYPE_LIST = "list";
         public static final String TYPE_WHO = "who";
         public static final String TYPE_CREATE_ROOM = "createroom";

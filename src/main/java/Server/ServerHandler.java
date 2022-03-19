@@ -179,7 +179,7 @@ public class ServerHandler extends Thread {
      * @param jsonPayload - JSON payload.
      * @throws IOException
      */
-    private void verifyUnique(JSONObject jsonPayload) throws IOException {
+    private void verifyUnique(JSONObject jsonPayload) {
         String value;
         String valueType;
         boolean isAvailable;

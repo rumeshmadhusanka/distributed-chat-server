@@ -143,6 +143,10 @@ public class ServerState {
         clientHandlerHashMap.put(clientHandler.getId(), clientHandler);
     }
 
+    public void removeClientHandler(ClientHandler clientHandler) {
+        clientHandlerHashMap.remove(clientHandler.getId(), clientHandler);
+    }
+
     public ConcurrentHashMap<Long, ClientHandler> getClientHandlerHashMap() {
         return clientHandlerHashMap;
     }
