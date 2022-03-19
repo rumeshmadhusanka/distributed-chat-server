@@ -12,7 +12,14 @@ import java.util.HashMap;
 import java.util.Random;
 
 public class Util {
-
+    /**
+     * Select n number of random servers out of a given collection of servers.
+     * Selection happens without replacement.
+     *
+     * @param servers servers Collection
+     * @param n       n
+     * @return Collection<Server>
+     */
     public static Collection<Server> getRandomServers(Collection<Server> servers, int n) {
         ArrayList<Server> serversList = new ArrayList<>(servers);
         Random random = new Random();

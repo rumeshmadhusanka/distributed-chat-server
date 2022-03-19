@@ -230,9 +230,8 @@ public class ClientHandler extends Thread {
      * Handle movejoin.
      *
      * @param jsonPayload - JSON payload.
-     * @throws IOException
      */
-    private void handleMoveJoin(JSONObject jsonPayload) throws IOException {
+    private void handleMoveJoin(JSONObject jsonPayload) {
         String mjIdentity = (String) jsonPayload.get(ClientConstants.IDENTITY);
         String mjFormerRoom = (String) jsonPayload.get(ClientConstants.FORMER_ROOM);
         String mjRoom = (String) jsonPayload.get(ClientConstants.ROOM_ID);
