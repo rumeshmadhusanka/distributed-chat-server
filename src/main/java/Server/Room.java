@@ -1,7 +1,6 @@
 package Server;
 
 import ClientHandler.ClientHandler;
-import Constants.ChatServerConstants;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -27,9 +26,13 @@ public class Room {
         return roomId;
     }
 
-    public String getOwner() {return owner;}
+    public String getOwner() {
+        return owner;
+    }
 
-    public String getServerId() {return serverId;}
+    public String getServerId() {
+        return serverId;
+    }
 
     public ConcurrentLinkedQueue<ClientHandler> getClientIdentityList() {
         return clientIdentityList;
@@ -39,5 +42,7 @@ public class Room {
         clientIdentityList.add(clientHandler);
     }
 
-    public void removeClient(ClientHandler clientHandler) { clientIdentityList.remove(clientHandler);}
+    public void removeClient(ClientHandler clientHandler) {
+        clientIdentityList.remove(clientHandler);
+    }
 }

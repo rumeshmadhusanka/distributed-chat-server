@@ -1,14 +1,14 @@
 package Constants;
 
 public class ChatServerConstants {
-    private ChatServerConstants(){
+    private ChatServerConstants() {
 
     }
 
     /**
      * Constants related to Server.
      */
-    public static class ServerConstants{
+    public static class ServerConstants {
 
         public static final String MAIN_HALL = "MainHall-";
         public static final String UNIQUE = "unique";
