@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 
 from fastapi import FastAPI
 
@@ -12,12 +13,17 @@ def exec_cmd(command):
     logger.info(str(out))
 
 
-@app.post('/')
-def func():
+def sync_and_build():
     logger.info("WebHook received")
     exec_cmd("git pull")
     exec_cmd("mvn clean install")
     exec_cmd("killall java")
+
+
+@app.post('/')
+def func():
+    task = threading.Thread(target=sync_and_build)
+    task.start()
     return {}
 
 
