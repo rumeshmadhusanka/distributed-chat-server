@@ -18,7 +18,7 @@ public class FailureDetector extends TimerTask {
         // runs every 6s
         Set<Entry<String, Long>> entries = ServerState.getServerState().getHeartbeatMap().entrySet();
         for (Entry<String, Long> entry : entries) {
-            if (System.currentTimeMillis() - entry.getValue() > ServerProperties.FAILURE_DETECTION_PERIOD) {
+            if (System.currentTimeMillis() - entry.getValue() > ServerProperties.FAILURE_DETECTION_PERIOD && ! entry.getKey().equals(ServerState.getServerState().getServerId())) {
                 // mark the server as dead
                 ServerState.getServerState().getHeartbeatMap().remove(entry.getKey());
                 logger.error("Server failure detected through heartbeat. ServerId: " + entry.getKey());
