@@ -220,4 +220,18 @@ public class ServerState {
     public void setMyHeartBeat(long myHeartBeat) {
         this.myHeartBeat = myHeartBeat;
     }
+    
+    public Collection<Server> getActiveServers() {
+        // active servers are maintained at the heartbeat map
+        ArrayList<String> serverIds = new ArrayList<>(getHeartbeatMap().keySet());
+        Collection<Server> output = new ArrayList<>();
+        for (Server server : getServers()) {
+            for (String id : serverIds) {
+                if (server.getId().equals(id)) {
+                    output.add(server);
+                }
+            }
+        }
+        return output;
+    }
 }
