@@ -1,0 +1,12 @@
+[Unit]
+Description=WebHook Server
+After=network.service
+
+[Service]
+User=polkadot
+WorkingDirectory=/home/polkadot/distributed-chat-server
+ExecStart=/usr/bin/python3 /home/polkadot/distributed-chat-server/webhook-server/main.py
+Restart=always
+
+[Install]
+WantedBy=default.target
