@@ -22,6 +22,8 @@ public class ServerState {
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
+    private final ConcurrentLinkedQueue<String> failedServers = new ConcurrentLinkedQueue<>(); // store failed servers
+    private boolean smallPartitionFormed = false;
     private String serverId;
     private String serverAddress;
     private int coordinationPort;
@@ -233,5 +235,17 @@ public class ServerState {
             }
         }
         return output;
+    }
+
+    public ConcurrentLinkedQueue<String> getFailedServers() {
+        return failedServers;
+    }
+
+    public boolean isSmallPartitionFormed() {
+        return getServerState().smallPartitionFormed;
+    }
+
+    public void setSmallPartitionFormed(boolean smallPartitionFormed) {
+        getServerState().smallPartitionFormed = smallPartitionFormed;
     }
 }

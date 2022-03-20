@@ -17,12 +17,38 @@ public class FailureDetector extends TimerTask {
         // runs every 6s
         Set<Entry<String, Long>> entries = ServerState.getServerState().getHeartbeatMap().entrySet();
         for (Entry<String, Long> entry : entries) {
-            if (System.currentTimeMillis() - entry.getValue() > ServerProperties.FAILURE_DETECTION_PERIOD && !entry.getKey().equals(ServerState.getServerState().getServerId())) {
+            if (System.currentTimeMillis() - entry.getValue() > ServerProperties.FAILURE_DETECTION_PERIOD &&
+                    !entry.getKey().equals(ServerState.getServerState().getServerId())) {
                 // mark the server as dead
-                ServerState.getServerState().getHeartbeatMap().remove(entry.getKey());
                 logger.error("Server failure detected through heartbeat. ServerId: " + entry.getKey());
-                // TODO what to do after detecting a failure?
+                Gossiping.removeServer(entry.getKey());
             }
         }
+        if (detectPartition()) {
+            //update the server state
+            ServerState.getServerState().setSmallPartitionFormed(true);
+            resetServerState();
+        } else if (ServerState.getServerState().isSmallPartitionFormed()) {
+            recoverFromPartition();
+        }
     }
+
+    private static boolean detectPartition() {
+        int totalServers = ServerState.getServerState().getServers().size() + 1;
+        int smallPartitionMaxSize = totalServers / 2; // rounds down
+        int failedServers = ServerState.getServerState().getFailedServers().size();
+        return failedServers > smallPartitionMaxSize;
+    }
+
+    private static void recoverFromPartition() {
+        //ask from the leader
+        //update your state
+        //todo
+        ServerState.getServerState().setSmallPartitionFormed(false);
+    }
+
+    private static void resetServerState() {
+        //todo
+    }
+
 }
