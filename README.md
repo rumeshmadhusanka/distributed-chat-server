@@ -1,3 +1,4 @@
+[![Maven Build](https://github.com/rumeshmadhusanka/distributed-chat-server/actions/workflows/build.yaml/badge.svg)](https://github.com/rumeshmadhusanka/distributed-chat-server/actions/workflows/build.yaml)
 ## Install dependencies
 
 ```bash
