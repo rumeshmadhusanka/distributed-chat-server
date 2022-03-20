@@ -36,14 +36,14 @@ public class LeaderElection {
             for (Map.Entry<String, JSONObject> mapEntry : replies.entrySet()) {
                 if (!replies.isEmpty() && mapEntry.getValue().get(ServerConstants.KIND).equals(ServerConstants.KIND_OK)) {
                     okReplies.add(mapEntry.getKey());
-                    logger.trace("Responded OK to: " + getThisServerId() + " by: " + mapEntry.getKey());
+                    logger.debug("Responded OK to: " + getThisServerId() + " by: " + mapEntry.getKey());
                 }
             }
             if (okReplies.isEmpty()) {
                 // No one has responded; I am the leader
                 announceToTheWorld();
                 ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(getThisServerId())));
-                logger.trace("No one responded to: " + getThisServerId());
+                logger.debug("No one responded to: " + getThisServerId());
                 stopLeaderElection();
             } else {
                 //Tell the
@@ -105,11 +105,11 @@ public class LeaderElection {
 
         if (Integer.parseInt(getThisServerId()) > Integer.parseInt(electionStarterId)) {
             JSONObject oKMessage = buildElectionJSON(ServerConstants.KIND_OK, getThisServerId());
-            logger.trace("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
+            logger.debug("Sending OK message to: " + electionStarterId + " from: " + getThisServerId());
             Messaging.respond(oKMessage, socket);
         } else if (Integer.parseInt(getThisServerId()) < Integer.parseInt(electionStarterId)) {
             JSONObject passMessage = buildElectionJSON(ServerConstants.KIND_PASS, getThisServerId());
-            logger.trace("Sending PASS message to: " + electionStarterId + " from: " + getThisServerId());
+            logger.debug("Sending PASS message to: " + electionStarterId + " from: " + getThisServerId());
             Messaging.respond(passMessage, socket);
         } else {
             logger.error("Replying OK to self. This should not happen");
@@ -132,7 +132,7 @@ public class LeaderElection {
         }
         JSONObject message = buildElectionJSON(ServerConstants.KIND_ELECTED, getThisServerId()); //sent by this server
         Server maxServer = ServerState.getServerState().getServerFromId(Integer.toString(maxServerId));
-        logger.trace("Max server: " + maxServer);
+        logger.debug("Max server: " + maxServer);
         Messaging.sendAndForget(new JSONObject(message), List.of(maxServer));
     }
 
@@ -141,7 +141,7 @@ public class LeaderElection {
     }
 
     public static void announceToTheWorld() {
-        logger.trace("Announcing to the world by: " + getThisServerId());
+        logger.debug("Announcing to the world by: " + getThisServerId());
         JSONObject message = buildElectionJSON(ServerConstants.KIND_COORDINATOR, getThisServerId());
         Messaging.sendAndForget(new JSONObject(message), ServerState.getServerState().getServers());
     }
