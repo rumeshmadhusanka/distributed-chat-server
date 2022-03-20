@@ -43,7 +43,7 @@ public class ServerHandler extends Thread {
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
         } catch (IOException | ParseException | ServerException | InterruptedException e) {
-            logger.debug(e.getMessage());
+            logger.debug(e);
         }
     }
 
