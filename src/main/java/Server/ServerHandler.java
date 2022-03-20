@@ -108,7 +108,7 @@ public class ServerHandler extends Thread {
                         logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
                     case ServerConstants.KIND_COORDINATOR:
-                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.debug("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
                 }
         }
