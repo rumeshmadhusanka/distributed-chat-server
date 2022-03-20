@@ -170,8 +170,8 @@ public class LeaderElection {
                         "Multiple servers may have started teh election process at the same time.");
                 startElection();
             } else {
-                logger.debug("Elected Leader: " + ServerState.getServerState().getCurrentLeader());
                 ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(newLeaderId)));
+                logger.debug("Elected Leader: " + ServerState.getServerState().getCurrentLeader());
             }
         }
     }
