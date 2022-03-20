@@ -154,6 +154,7 @@ public class LeaderElection {
             ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(newLeaderId)));
             stopLeaderElection();
         } else {
+            logger.debug("Received coordinator sampler");
             if (Integer.parseInt(newLeaderId) < Integer.parseInt(getThisServerId())) {
                 try {
                     // If more than one server, send the ELECTION message at the same time, election process may continue, each may elect themselves as leaders.
@@ -165,7 +166,7 @@ public class LeaderElection {
                 } catch (InterruptedException e) {
                     logger.error(e);
                 }
-                logger.warn("Received COORDINATOR message after completing an election; " +
+                logger.debug("Received COORDINATOR message after completing an election; " +
                         "Multiple servers may have started teh election process at the same time.");
                 startElection();
             } else {
