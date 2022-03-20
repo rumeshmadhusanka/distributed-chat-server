@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+
     <CustomLevels>
-        <CustomLevel name="HEARTBEAT" intLevel="350"/>
+        <CustomLevel name="HEARTBEAT" intLevel="50"/>
     </CustomLevels>
 
     <Appenders>
@@ -9,11 +10,34 @@
             <PatternLayout
                     pattern="%d{HH:mm:ss.SSS} [%highlight{%level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green, DEBUG=blue, TRACE=white}] %l [%t{24}] %msg%n"
                     disableAnsi="false"/>
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
         </Console>
+
+        <File name="DEBUG_FILE" fileName="logs/debug.log">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%highlight{%level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green,
+                    DEBUG=blue, TRACE=white}] %l [%t{24}] %msg%n
+                </Pattern>
+            </PatternLayout>
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+            <param name="Append" value="false" />
+        </File>
+
+        <File name="HB_FILE" fileName="logs/heartbeat.log">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%highlight{%level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green,
+                    DEBUG=blue, TRACE=white}] %l [%t{24}] %msg%n
+                </Pattern>
+            </PatternLayout>
+            <param name="Append" value="false" />
+        </File>
     </Appenders>
+
     <Loggers>
-        <Root level="DEBUG">
+        <Root level="ALL">
             <AppenderRef ref="SlowConsole"/>
+            <AppenderRef ref="DEBUG_FILE"/>
+            <AppenderRef ref="HB_FILE"/>
         </Root>
     </Loggers>
 </Configuration>
