@@ -72,13 +72,13 @@ public class Main {
 //                logger.trace(Arrays.toString(Thread.getAllStackTraces().keySet().toArray()));
             }
         };
-        new Timer(true).schedule(timerTask, 0, 5000);
+        new Timer("Thread-Counter-Timer",true).schedule(timerTask, 0, 5000);
 
         //start the Heartbeat Sender
-        new Timer(true).schedule(new HeartBeatSender(), 0, ServerProperties.HEARTBEAT_PERIOD);
+        new Timer("HeartBeat-Sender-Timer",true).schedule(new HeartBeatSender(), 0, ServerProperties.HEARTBEAT_PERIOD);
 
         // start failure detector
-        new Timer(true).schedule(new FailureDetector(), ServerProperties.HEARTBEAT_PERIOD * 2L, ServerProperties.FAILURE_DETECTION_PERIOD);
+        new Timer("Failure-Detector-Timer",true).schedule(new FailureDetector(), ServerProperties.HEARTBEAT_PERIOD * 2L, ServerProperties.FAILURE_DETECTION_PERIOD);
 
         // Start ClientHandler.
         while (true) {
