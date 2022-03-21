@@ -245,6 +245,9 @@ public class ServerState {
     }
 
     public boolean amITheLeader() {
+        if (currentLeader == null) {
+            return false;
+        }
         return serverId.equals(currentLeader.getId());
     }
 
