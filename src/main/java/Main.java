@@ -1,4 +1,5 @@
 import ClientHandler.ClientHandler;
+import Consensus.LeaderElection;
 import Constants.ServerProperties;
 import Gossiping.FailureDetector;
 import Gossiping.HeartBeatSender;
@@ -18,7 +19,7 @@ import java.util.TimerTask;
 public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         //TODO Every server socket should bind to the 0.0.0.0 when deploying to GCP/AWS. Other server's external ips should be stored in Server objects
 
         //initialize server properties
@@ -52,6 +53,10 @@ public class Main {
         });
         serverHandlerLoop.setName("Server Handler Loop Thread");
         serverHandlerLoop.start();
+
+        //wait till an existing leader finds you; then start an election
+        Thread.sleep(6000);
+        LeaderElection.startElection();
 
 
         // ServerSocket for client communication.

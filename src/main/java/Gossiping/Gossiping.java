@@ -27,6 +27,10 @@ public class Gossiping {
                 }
             } else {
                 logger.debug("Discovered server through Gossiping. Server id: " + serverId);
+                if (ServerState.getServerState().amITheLeader() && failedServerMapContains(serverId)){
+                    //send my(leader's) state asynchronously
+                    //todo
+                }
                 addServer(serverId, receivedTimestamp);
                 forwardHeartBeat(request);
             }
@@ -45,6 +49,10 @@ public class Gossiping {
     public static synchronized void addServer(String serverId, long timeStamp) {
         ServerState.getServerState().getFailedServers().remove(serverId);
         ServerState.getServerState().getHeartbeatMap().put(serverId, timeStamp);
+    }
+
+    public static boolean failedServerMapContains(String serverId){
+        return ServerState.getServerState().getFailedServers().contains(serverId);
     }
 
 }

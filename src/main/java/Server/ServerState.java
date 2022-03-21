@@ -243,4 +243,9 @@ public class ServerState {
     public void setSmallPartitionFormed(boolean smallPartitionFormed) {
         getServerState().smallPartitionFormed = smallPartitionFormed;
     }
+
+    public boolean amITheLeader(){
+        return serverId.equals(currentLeader.getId());
+    }
+
 }

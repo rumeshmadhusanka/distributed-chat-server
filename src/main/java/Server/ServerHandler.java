@@ -7,6 +7,7 @@ import Constants.ChatServerConstants.ServerConstants;
 import Constants.ChatServerConstants.ServerExceptionConstants;
 import Exception.ServerException;
 import Gossiping.Gossiping;
+import Gossiping.FailureDetector;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,6 +94,9 @@ public class ServerHandler extends Thread {
 
                     case ServerConstants.KIND_HEARTBEAT:
                         Gossiping.receiveHeartBeat(jsonPayload);
+                        break;
+                    case ServerConstants.KIND_LEADER_STATE:
+                        FailureDetector.recoverFromPartition(jsonPayload);
                         break;
                 }
                 break;

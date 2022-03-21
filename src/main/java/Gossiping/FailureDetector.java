@@ -4,6 +4,7 @@ import Constants.ServerProperties;
 import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
 
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,11 +26,9 @@ public class FailureDetector extends TimerTask {
             }
         }
         if (detectPartition()) {
-            //update the server state
+            //I'm in the small partition;reset my server state
             ServerState.getServerState().setSmallPartitionFormed(true);
             resetServerState();
-        } else if (ServerState.getServerState().isSmallPartitionFormed()) {
-            recoverFromPartition();
         }
     }
 
@@ -40,9 +39,9 @@ public class FailureDetector extends TimerTask {
         return failedServers > smallPartitionMaxSize;
     }
 
-    private static void recoverFromPartition() {
-        //ask from the leader
-        //update your state
+    public static void recoverFromPartition(JSONObject request) {
+        // this request contains the Leader's state
+        // parse the request; update your state
         //todo
         ServerState.getServerState().setSmallPartitionFormed(false);
     }
