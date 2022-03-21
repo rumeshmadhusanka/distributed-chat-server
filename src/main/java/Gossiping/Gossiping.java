@@ -32,9 +32,10 @@ public class Gossiping {
                 }
             } else {
                 logger.debug("Discovered server through Gossiping. Server id: " + serverId);
-                if (ServerState.getServerState().amITheLeader() && failedServerMapContains(serverId)) {
+                if (ServerState.getServerState().amITheLeader()) {
+                    logger.debug("Sending ServerState since I'm the Leader.");
                     HashMap<String, String> serializedServerState = ServerState.getServerState().getCurrentServerState();
-                    serializedServerState.put(ServerConstants.TYPE, ServerConstants.KIND_LEADER_STATE);
+                    serializedServerState.put(ServerConstants.TYPE, ServerConstants.LEADER_STATE_MERGE);
                     Collection<Server> serverAsACollection = new ArrayList<>();
                     serverAsACollection.add(ServerState.getServerState().getServerFromId(serverId));
                     Messaging.sendAndForget(new JSONObject(serializedServerState), serverAsACollection);
