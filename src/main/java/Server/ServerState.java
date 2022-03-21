@@ -51,9 +51,9 @@ public class ServerState {
         return serverName.substring(1);
     }
 
-    public void initialize(String serverId, String serverConf) {
-        serverId = getServerIdFromName(serverId);
-        this.serverId = serverId;
+    public void initialize(String thisServerId, String serverConf) {
+        thisServerId = getServerIdFromName(thisServerId);
+        this.serverId = thisServerId;
         try {
             File conf = new File(serverConf);
             Scanner reader = new Scanner(conf);
@@ -61,17 +61,17 @@ public class ServerState {
                 String line = reader.nextLine();
                 String[] params = line.split("\t");
                 params[0] = getServerIdFromName(params[0]);
-                if (params[0].equals(serverId)) {
+                if (params[0].equals(thisServerId)) {
                     this.serverAddress = params[1];
                     this.clientsPort = Integer.parseInt(params[2]);
                     this.coordinationPort = Integer.parseInt(params[3]);
-                    logger.trace("Server created: " + serverId + " " + serverAddress + " " + clientsPort + " " + coordinationPort);
+                    logger.trace("Server created: " + thisServerId + " " + serverAddress + " " + clientsPort + " " + coordinationPort);
                 } else {
                     Server server = new Server(params[0], params[1], Integer.parseInt(params[3]), Integer.parseInt(params[2]));
                     serversHashmap.put(server.getId(), server);
                 }
-                String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + serverId;
-                addRoomToMap(new Room(serverId, mainHallId));
+                String mainHallId = getMainHallIdString(thisServerId);
+                addRoomToMap(new Room(thisServerId, mainHallId));
             }
             //create main hall chatroom
 
@@ -119,7 +119,7 @@ public class ServerState {
     }
 
     public Room getMainHall() {
-        return roomsHashMap.get(ChatServerConstants.ServerConstants.MAIN_HALL + serverId);
+        return roomsHashMap.get(getMainHallIdString(serverId));
     }
 
     public String getServerAddress() {
@@ -347,7 +347,6 @@ public class ServerState {
             disconnectClients();
             clientHandlerHashMap.clear();
             roomsHashMap.clear();
-            serversHashmap.clear();
             identityList.clear();
             heartBeatMap.clear();
             failedServers.clear();
@@ -373,7 +372,11 @@ public class ServerState {
     }
 
     public void addMainHallOfDetectedServer(String sId) {
-        String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + sId;
+        String mainHallId = getMainHallIdString(sId);
         roomsHashMap.put(mainHallId, new Room(sId, mainHallId));
+    }
+
+    private String getMainHallIdString(String sId) {
+        return ChatServerConstants.ServerConstants.MAIN_HALL + sId;
     }
 }
