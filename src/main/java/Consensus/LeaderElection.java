@@ -137,6 +137,7 @@ public class LeaderElection {
     }
 
     public static void respondToElectedMessage() {
+        ServerState.getServerState().setCurrentLeader(new Leader(ServerState.getServerState().getServerFromId(getThisServerId())));
         announceToTheWorld();
     }
 
