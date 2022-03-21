@@ -86,7 +86,7 @@ public class ServerState {
         for (Server s : servers) {
             if (s.getId().equals(serverId)) {
                 return s;
-            }r
+            }
         }
         if (serverId.equals(this.serverId)) {
             return new Server(this.serverId, this.serverAddress, this.coordinationPort, this.clientsPort); //todo check coordination port or clients port
