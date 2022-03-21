@@ -6,7 +6,6 @@ import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ChatServerConstants.ServerExceptionConstants;
 import Exception.ServerException;
-import Gossiping.FailureDetector;
 import Gossiping.Gossiping;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
@@ -95,9 +94,6 @@ public class ServerHandler extends Thread {
                     case ServerConstants.KIND_HEARTBEAT:
                         Gossiping.receiveHeartBeat(jsonPayload);
                         break;
-                    case ServerConstants.KIND_LEADER_STATE:
-                        ServerState.getServerState().restoreServerState(jsonPayload);
-                        break;
                 }
                 break;
             case ServerConstants.TYPE_BULLY:
@@ -106,15 +102,25 @@ public class ServerHandler extends Thread {
                         // This server received an ELECTION message
                         logger.trace("Received bully to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.replyOKorPass(jsonPayload, serverSocket);
+                        break;
+
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
                         // TODO
                         logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
+                        break;
+
                     case ServerConstants.KIND_COORDINATOR:
                         logger.debug("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
+                        break;
                 }
+                break;
+            case ServerConstants.LEADER_STATE_MERGE:
+                logger.info("State Received from the leader.");
+                ServerState.getServerState().restoreServerState(jsonPayload);
+                break;
         }
     }
 
