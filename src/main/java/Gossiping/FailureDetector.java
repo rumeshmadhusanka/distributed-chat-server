@@ -31,6 +31,9 @@ public class FailureDetector extends TimerTask {
                 ServerState.getServerState().setSmallPartitionFormed(true);
                 ServerState.getServerState().purgeServerState();
             }
+            // TODO: Larger partition needs to remove identities and rooms of failed servers.
+            // Start election()
+
         } catch (IOException e) {
             logger.debug(e);
         }
