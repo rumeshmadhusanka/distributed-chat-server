@@ -245,7 +245,7 @@ public class ServerState {
     }
 
     public boolean amITheLeader() {
-        if(currentLeader!=null) {
+        if (currentLeader != null) {
             return serverId.equals(currentLeader.getId());
         }
         return false;
@@ -293,14 +293,16 @@ public class ServerState {
         }
 
         ArrayList<Room> tempRoomList = (ArrayList<Room>) deserialize(roomString);
-        if (roomsHashMap.isEmpty()) {
-            for (Room room : tempRoomList){
+        for (Room room : tempRoomList) {
+            // Prevent MainHall duplicates.
+            if (!roomsHashMap.containsKey(room.getRoomId())) {
                 roomsHashMap.put(room.getRoomId(), room);
             }
         }
 
         setSmallPartitionFormed(false);
     }
+
 
     /**
      * Serialize a given object.
@@ -370,5 +372,8 @@ public class ServerState {
         }
     }
 
-
+    public void addMainHallOfDetectedServer(String sId) {
+        String mainHallId = ChatServerConstants.ServerConstants.MAIN_HALL + sId;
+        roomsHashMap.put(mainHallId, new Room(sId, mainHallId));
+    }
 }
