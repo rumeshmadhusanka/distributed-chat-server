@@ -2,13 +2,12 @@ package Server;
 
 import ClientHandler.ClientHandler;
 import Consensus.Leader;
-import Consensus.LeaderElection;
 import Constants.ChatServerConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -20,6 +19,7 @@ public class ServerState {
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
+    // TODO: Change identityList into a HashMap to keep the serverIds.
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
     private final ConcurrentLinkedQueue<String> failedServers = new ConcurrentLinkedQueue<>(); // store failed servers
@@ -244,8 +244,125 @@ public class ServerState {
         getServerState().smallPartitionFormed = smallPartitionFormed;
     }
 
-    public boolean amITheLeader(){
+    public boolean amITheLeader() {
         return serverId.equals(currentLeader.getId());
     }
+
+    /**
+     * Returns the current ServerState.
+     *
+     * @return - Current ServerState containing identities and rooms.
+     * @throws IOException
+     */
+    public HashMap<String, String> getCurrentServerState() throws IOException {
+        HashMap<String, String> serverState = new HashMap<>();
+
+        // TODO: change the code to reflect the datatype change in identityList.
+        // Serialize identity list.
+        serverState.put("IdentityList", serialize(new ArrayList<>(identityList)));
+
+        // Rooms belonging to current server contains the ClientHandler list. Need to remove that before serializing.
+        ArrayList<Room> tempRooms = new ArrayList<>();
+        for (Room room : roomsHashMap.values()) {
+            tempRooms.add(new Room(room.getServerId(), room.getRoomId(), room.getOwner()));
+        }
+        serverState.put("RoomList", serialize(tempRooms));
+
+        return serverState;
+    }
+
+    /**
+     * Restores the ServerState using a jsonObject sent by the leader.
+     *
+     * @param jsonObject - JSONObject received from the leader.
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public void restoreServerState(JSONObject jsonObject) throws IOException, ClassNotFoundException {
+
+        String identityString = (String) jsonObject.get("IdentityList");
+        String roomString = (String) jsonObject.get("RoomList");
+
+        Collection<String> tempIdList = (Collection<String>) deserialize(identityString);
+        if (identityList.isEmpty()) {
+            identityList.addAll(tempIdList);
+        }
+
+        ConcurrentHashMap<String, Room> tempRoomList = (ConcurrentHashMap<String, Room>) deserialize(roomString);
+        if (roomsHashMap.isEmpty()) {
+            roomsHashMap.putAll(tempRoomList);
+        }
+
+        setSmallPartitionFormed(false);
+    }
+
+    /**
+     * Serialize a given object.
+     *
+     * @param obj - Object
+     * @return - Serialized object.
+     * @throws IOException
+     */
+    private String serialize(Serializable obj) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(obj);
+        oos.close();
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
+    }
+
+    /**
+     * Deserialize a given string.
+     *
+     * @param objectString - Serialized string.
+     * @return - Deserialized object.
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private static Object deserialize(String objectString) throws IOException, ClassNotFoundException {
+        byte[] data = Base64.getDecoder().decode(objectString);
+        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+        Object obj = ois.readObject();
+        ois.close();
+        return obj;
+    }
+
+    /**
+     * Purge the ServerState when a partition is formed.
+     *
+     * @throws IOException
+     */
+    public void purgeServerState() throws IOException {
+        if (smallPartitionFormed) {
+            logger.info("Purging ServerState due to formation of a small partition.");
+            currentLeader = null;
+            disconnectClients();
+            clientHandlerHashMap.clear();
+            roomsHashMap.clear();
+            serversHashmap.clear();
+            identityList.clear();
+            heartBeatMap.clear();
+            failedServers.clear();
+            // Confirm resetting heartbeat
+            myHeartBeat = 0;
+        }
+    }
+
+    /**
+     * Disconnect all the client present in the clientHandlerHashMap.
+     *
+     * @throws IOException
+     */
+    private void disconnectClients() throws IOException {
+
+        //TODO:
+        //Closing the socket here might throw an SocketException in either ClientHandler or main.
+        //Need to handle that scenario after testing.
+
+        for (ClientHandler clientHandler : clientHandlerHashMap.values()) {
+            clientHandler.getClientSocket().close();
+        }
+    }
+
 
 }
