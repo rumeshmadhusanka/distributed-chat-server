@@ -39,6 +39,7 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         try {
+            // TODO: Don't accept client connections when in smallPartitionedState.
             // Start client handler and wait for client to connect.
             logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " connected.");
             //Create Input for the connection
