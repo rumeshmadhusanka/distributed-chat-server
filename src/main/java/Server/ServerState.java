@@ -75,11 +75,6 @@ public class ServerState {
             }
             //create main hall chatroom
 
-
-            //TODO remove hardcoded Leader value
-            LeaderElection.startElection();
-//            this.currentLeader = new Leader("1", "0.0.0.0", 5555);
-
         } catch (FileNotFoundException e) {
             logger.debug(e.getMessage());
         }
@@ -91,7 +86,7 @@ public class ServerState {
         for (Server s : servers) {
             if (s.getId().equals(serverId)) {
                 return s;
-            }
+            }r
         }
         if (serverId.equals(this.serverId)) {
             return new Server(this.serverId, this.serverAddress, this.coordinationPort, this.clientsPort); //todo check coordination port or clients port
