@@ -155,13 +155,6 @@ public class ClientHandler extends Thread {
             roomIdList.add(roomlist.nextElement());
         }
 
-        // TODO: Get Active servers.
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        // Add main halls of the rest of the server.
-        for (Server server : servers) {
-            roomIdList.add(ServerConstants.MAIN_HALL + server.getId());
-        }
-
         HashMap<String, Object> response = new HashMap<>();
         response.put(ClientConstants.TYPE, ClientConstants.ROOM_LIST);
         response.put(ClientConstants.ROOMS, roomIdList);
