@@ -6,8 +6,8 @@ import Consensus.LeaderElection;
 import Constants.ChatServerConstants.ServerConstants;
 import Constants.ChatServerConstants.ServerExceptionConstants;
 import Exception.ServerException;
-import Gossiping.Gossiping;
 import Gossiping.FailureDetector;
+import Gossiping.Gossiping;
 import Messaging.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +43,7 @@ public class ServerHandler extends Thread {
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
-        } catch (IOException | ParseException | ServerException | InterruptedException e) {
+        } catch (IOException | ParseException | ServerException | InterruptedException | ClassNotFoundException e) {
             logger.debug(e);
         }
     }
@@ -56,7 +56,7 @@ public class ServerHandler extends Thread {
      * @throws ParseException
      * @throws ServerException
      */
-    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException, InterruptedException {
+    private void resolveServerRequest(JSONObject jsonPayload) throws IOException, ParseException, ServerException, InterruptedException, ClassNotFoundException {
         String type = (String) jsonPayload.get(ServerConstants.TYPE);
         String kind = (String) jsonPayload.get(ServerConstants.KIND);
 
@@ -96,7 +96,7 @@ public class ServerHandler extends Thread {
                         Gossiping.receiveHeartBeat(jsonPayload);
                         break;
                     case ServerConstants.KIND_LEADER_STATE:
-                        FailureDetector.recoverFromPartition(jsonPayload);
+                        ServerState.getServerState().restoreServerState(jsonPayload);
                         break;
                 }
                 break;

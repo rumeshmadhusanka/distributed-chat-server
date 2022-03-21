@@ -2,9 +2,10 @@ package Server;
 
 import ClientHandler.ClientHandler;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class Room {
+public class Room implements Serializable {
     private final String roomId;
     private final String owner;
     private final String serverId;
