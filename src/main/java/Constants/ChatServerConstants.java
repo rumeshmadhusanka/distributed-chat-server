@@ -49,6 +49,7 @@ public class ChatServerConstants {
 
         public static final String KIND_HEARTBEAT = "heartbeat";
         public static final String TIMESTAMP = "timestamp";
+        public static final String KIND_LEADER_STATE = "leaderstate";
     }
 
     /**

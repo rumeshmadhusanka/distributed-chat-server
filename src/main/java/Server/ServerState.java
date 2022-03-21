@@ -22,6 +22,8 @@ public class ServerState {
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
+    private final ConcurrentLinkedQueue<String> failedServers = new ConcurrentLinkedQueue<>(); // store failed servers
+    private boolean smallPartitionFormed = false;
     private String serverId;
     private String serverAddress;
     private int coordinationPort;
@@ -72,11 +74,6 @@ public class ServerState {
                 addRoomToMap(new Room(serverId, mainHallId));
             }
             //create main hall chatroom
-
-
-            //TODO remove hardcoded Leader value
-            LeaderElection.startElection();
-//            this.currentLeader = new Leader("1", "0.0.0.0", 5555);
 
         } catch (FileNotFoundException e) {
             logger.debug(e.getMessage());
@@ -234,4 +231,21 @@ public class ServerState {
         }
         return output;
     }
+
+    public ConcurrentLinkedQueue<String> getFailedServers() {
+        return failedServers;
+    }
+
+    public boolean isSmallPartitionFormed() {
+        return getServerState().smallPartitionFormed;
+    }
+
+    public void setSmallPartitionFormed(boolean smallPartitionFormed) {
+        getServerState().smallPartitionFormed = smallPartitionFormed;
+    }
+
+    public boolean amITheLeader(){
+        return serverId.equals(currentLeader.getId());
+    }
+
 }

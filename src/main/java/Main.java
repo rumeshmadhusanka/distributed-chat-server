@@ -1,4 +1,5 @@
 import ClientHandler.ClientHandler;
+import Consensus.LeaderElection;
 import Constants.ServerProperties;
 import Gossiping.FailureDetector;
 import Gossiping.HeartBeatSender;
@@ -18,8 +19,7 @@ import java.util.TimerTask;
 public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException {
-        //TODO Every server socket should bind to the 0.0.0.0 when deploying to GCP/AWS. Other server's external ips should be stored in Server objects
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         //initialize server properties
         ServerProperties.init();
@@ -53,6 +53,27 @@ public class Main {
         serverHandlerLoop.setName("Server Handler Loop Thread");
         serverHandlerLoop.start();
 
+        //        Print the active thread count
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                logger.trace("Active thread count on server " + ServerState.getServerState().getServerId() + " : " + Thread.activeCount());
+//                logger.trace(Arrays.toString(Thread.getAllStackTraces().keySet().toArray()));
+            }
+        };
+        new Timer("Thread-Counter-Timer", true).schedule(timerTask, 0, 5000);
+
+        //start the Heartbeat Sender
+        new Timer("HeartBeat-Sender-Timer", true).schedule(new HeartBeatSender(), 0, ServerProperties.HEARTBEAT_PERIOD);
+
+        // start failure detector
+        new Timer("Failure-Detector-Timer", true).schedule(new FailureDetector(), ServerProperties.HEARTBEAT_PERIOD * 2L, ServerProperties.FAILURE_DETECTION_PERIOD);
+
+
+        //wait till an existing leader finds you; then start an election
+        Thread.sleep(6000);
+        LeaderElection.startElection();
+
 
         // ServerSocket for client communication.
         ServerSocket serverClientSocket = new ServerSocket();
@@ -63,22 +84,6 @@ public class Main {
         serverClientSocket.bind(clientEndpoint);
         logger.debug("Local Client Socket Address: " + serverClientSocket.getLocalSocketAddress());
         logger.info("Waiting for clients on port " + serverClientSocket.getLocalPort());
-
-//        Print the active thread count
-        TimerTask timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                logger.trace("Active thread count on server " + ServerState.getServerState().getServerId() + " : " + Thread.activeCount());
-//                logger.trace(Arrays.toString(Thread.getAllStackTraces().keySet().toArray()));
-            }
-        };
-        new Timer("Thread-Counter-Timer",true).schedule(timerTask, 0, 5000);
-
-        //start the Heartbeat Sender
-        new Timer("HeartBeat-Sender-Timer",true).schedule(new HeartBeatSender(), 0, ServerProperties.HEARTBEAT_PERIOD);
-
-        // start failure detector
-        new Timer("Failure-Detector-Timer",true).schedule(new FailureDetector(), ServerProperties.HEARTBEAT_PERIOD * 2L, ServerProperties.FAILURE_DETECTION_PERIOD);
 
         // Start ClientHandler.
         while (true) {
