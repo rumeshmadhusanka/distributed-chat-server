@@ -32,6 +32,7 @@ public class Gossiping {
                 }
             } else {
                 logger.debug("Discovered server through Gossiping. Server id: " + serverId);
+                ServerState.getServerState().addMainHallOfDetectedServer(serverId);
                 if (ServerState.getServerState().amITheLeader()) {
                     logger.debug("Sending ServerState since I'm the Leader.");
                     HashMap<String, String> serializedServerState = ServerState.getServerState().getCurrentServerState();
