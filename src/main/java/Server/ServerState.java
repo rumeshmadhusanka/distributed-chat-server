@@ -245,10 +245,10 @@ public class ServerState {
     }
 
     public boolean amITheLeader() {
-        if (currentLeader == null) {
-            return false;
+        if(currentLeader!=null) {
+            return serverId.equals(currentLeader.getId());
         }
-        return serverId.equals(currentLeader.getId());
+        return false;
     }
 
     /**
@@ -283,6 +283,7 @@ public class ServerState {
      */
     public void restoreServerState(JSONObject jsonObject) throws IOException, ClassNotFoundException {
 
+        logger.info("Restoring ServerState using data sent by the leader.");
         String identityString = (String) jsonObject.get("IdentityList");
         String roomString = (String) jsonObject.get("RoomList");
 
@@ -291,9 +292,11 @@ public class ServerState {
             identityList.addAll(tempIdList);
         }
 
-        ConcurrentHashMap<String, Room> tempRoomList = (ConcurrentHashMap<String, Room>) deserialize(roomString);
+        ArrayList<Room> tempRoomList = (ArrayList<Room>) deserialize(roomString);
         if (roomsHashMap.isEmpty()) {
-            roomsHashMap.putAll(tempRoomList);
+            for (Room room : tempRoomList){
+                roomsHashMap.put(room.getRoomId(), room);
+            }
         }
 
         setSmallPartitionFormed(false);
