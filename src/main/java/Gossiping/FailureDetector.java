@@ -1,14 +1,19 @@
 package Gossiping;
 
+import Constants.ChatServerConstants;
 import Constants.ServerProperties;
+import Server.Room;
 import Server.ServerState;
+import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FailureDetector extends TimerTask {
     private static final Logger logger = LogManager.getLogger(FailureDetector.class);
@@ -31,9 +36,23 @@ public class FailureDetector extends TimerTask {
                 logger.info("This server is in a small partition.");
                 ServerState.getServerState().setSmallPartitionFormed(true);
                 ServerState.getServerState().purgeServerState();
+            } else {
+                // TODO: Larger partition needs to remove identities.
+                // Start election()
+                ConcurrentLinkedQueue<String> failedServersId = ServerState.getServerState().getFailedServers();
+                if (failedServersId.size() != 0) {
+                    logger.trace("Partition has created. This server is in the large partition");
+                    if (ServerState.getServerState().amITheLeader()) {
+                        for (String serverId : failedServersId) {
+                            Collection<Room> roomsList = ServerState.getServerState().getRoomsByServer(serverId);
+                            for (Room room : roomsList) {
+                                ServerState.getServerState().removeRoom(room);
+                                Util.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_ROOM, room.getRoomId(), room.getOwner());
+                            }
+                        }
+                    }
+                }
             }
-            // TODO: Larger partition needs to remove identities and rooms of failed servers.
-            // Start election()
 
         } catch (IOException | InterruptedException e) {
             logger.debug(e);

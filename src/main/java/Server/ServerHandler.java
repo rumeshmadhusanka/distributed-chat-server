@@ -168,12 +168,13 @@ public class ServerHandler extends Thread {
         String delRoomId = extractRoomIdFromRequest(jsonPayload);
         Room delRoom = ServerState.getServerState().getRoom(delRoomId);
         // Remove clients from the room, if the room is hosted in this server.
-        if (delRoom.getServerId().equals(ServerState.getServerState().getServerId())) {
-            logger.info("Removing clients from room before deletion");
-            delRoom.removeClientsFromRoom();
+        if (delRoom != null) {
+            if (delRoom.getServerId().equals(ServerState.getServerState().getServerId())) {
+                logger.info("Removing clients from room before deletion");
+                delRoom.removeClientsFromRoom();
+            }
+            ServerState.getServerState().removeRoom(delRoom);
         }
-
-        ServerState.getServerState().removeRoom(delRoom);
     }
 
     /**
