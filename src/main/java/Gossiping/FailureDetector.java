@@ -28,13 +28,14 @@ public class FailureDetector extends TimerTask {
             }
             if (detectPartition()) {
                 //I'm in the small partition;reset my server state
+                logger.info("This server is in a small partition.");
                 ServerState.getServerState().setSmallPartitionFormed(true);
                 ServerState.getServerState().purgeServerState();
             }
             // TODO: Larger partition needs to remove identities and rooms of failed servers.
             // Start election()
 
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             logger.debug(e);
         }
     }

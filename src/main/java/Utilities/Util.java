@@ -1,7 +1,6 @@
 package Utilities;
 
 import Constants.ChatServerConstants;
-import Messaging.Messaging;
 import Server.Server;
 import Server.ServerState;
 import org.json.simple.JSONObject;
@@ -10,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Util {
     /**
@@ -48,5 +46,22 @@ public class Util {
         request.put(ChatServerConstants.ServerConstants.ROOM_OWNER, owner);
         Collection<Server> servers = ServerState.getServerState().getServers();
         Messaging.sendAndForget(new JSONObject(request), servers);
+    }
+
+    /**
+     * Create a JSON object to inform about room change to clients.
+     *
+     * @param identity - Identity of the client.
+     * @param former   - Previous room client was in.
+     * @param roomId   - New room id.
+     * @return - JSON object.
+     */
+    public static JSONObject buildRoomChangeJSON(String identity, String former, String roomId) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ChatServerConstants.ClientConstants.TYPE, ChatServerConstants.ClientConstants.CHANGE_ROOM);
+        request.put(ChatServerConstants.ClientConstants.IDENTITY, identity);
+        request.put(ChatServerConstants.ClientConstants.FORMER_ROOM, former);
+        request.put(ChatServerConstants.ClientConstants.ROOM_ID, roomId);
+        return new JSONObject(request);
     }
 }

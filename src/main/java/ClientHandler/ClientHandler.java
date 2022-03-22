@@ -4,10 +4,10 @@ import Consensus.Consensus;
 import Constants.ChatServerConstants.ClientConstants;
 import Constants.ChatServerConstants.ServerConstants;
 import Exception.ServerException;
-import Messaging.Messaging;
 import Server.Room;
 import Server.Server;
 import Server.ServerState;
+import Utilities.Messaging;
 import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,6 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         try {
-            // TODO: Don't accept client connections when in smallPartitionedState.
             // Start client handler and wait for client to connect.
             logger.info("Client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + " connected.");
             //Create Input for the connection
@@ -48,7 +47,7 @@ public class ClientHandler extends Thread {
 
             while (!quitFlag && scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                logger.debug("Received: " + line);
+                logger.debug("Received from client: " + line);
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
             // Client sent quit or got disconnected.
@@ -127,7 +126,7 @@ public class ClientHandler extends Thread {
     private void broadcastMessage(JSONObject jsonPayload) {
         String message = (String) jsonPayload.get(ClientConstants.CONTENT);
         if (message != null && (!message.isBlank())) {
-            logger.debug("'" + message + "' received from " + currentIdentity);
+            logger.debug("Message '" + message + "' received from client " + currentIdentity);
             // Create message broadcast object
             HashMap<String, String> messageBroadcast = new HashMap<>();
             messageBroadcast.put(ClientConstants.TYPE, ClientConstants.TYPE_MESSAGE);
@@ -151,9 +150,9 @@ public class ClientHandler extends Thread {
      */
     private void sendRoomIdsInSystem() {
         ArrayList<String> roomIdList = new ArrayList<>();
-        Enumeration<String> roomlist = ServerState.getServerState().getRoomsIds();
-        while (roomlist.hasMoreElements()) {
-            roomIdList.add(roomlist.nextElement());
+        Enumeration<String> roomList = ServerState.getServerState().getRoomsIds();
+        while (roomList.hasMoreElements()) {
+            roomIdList.add(roomList.nextElement());
         }
 
         HashMap<String, Object> response = new HashMap<>();
@@ -196,7 +195,9 @@ public class ClientHandler extends Thread {
 
             // Inform clients in the current room about quitting.
             Collection<ClientHandler> clients = ServerState.getServerState().getClientsInRoom(currentRoom);
-            informClientChangeRoom(clients, "");
+            if (clients != null) {
+                informClientChangeRoom(clients, "");
+            }
 
             // Remove client from server state.
             logger.debug("Removing identity and client handler from ServerState");
@@ -381,7 +382,7 @@ public class ClientHandler extends Thread {
         for (ClientHandler client : roomClients) {
             mainHall.addClient(client);
             client.setCurrentRoom(mainHall.getRoomId());
-            JSONObject roomChangeRequest = buildRoomChangeJSON(
+            JSONObject roomChangeRequest = Util.buildRoomChangeJSON(
                     client.getCurrentIdentity(), room.getRoomId(), mainHall.getRoomId());
             Messaging.respond(roomChangeRequest, client.getClientSocket());
         }
@@ -423,7 +424,7 @@ public class ClientHandler extends Thread {
         Room room = ServerState.getServerState().getRoom(roomId);
         if (room == null || room.getOwner().equals(currentIdentity)) {
             logger.debug("Tried joining " + roomId + " room. Either room doesn't exist or requesting client is the current owner.");
-            JSONObject roomChangeRequest = buildRoomChangeJSON(currentIdentity, roomId, roomId);
+            JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, roomId, roomId);
             Messaging.respond(roomChangeRequest, clientSocket);
             return;
         }
@@ -511,23 +512,6 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Create a JSON object to inform about room change to clients.
-     *
-     * @param identity - Identity of the client.
-     * @param former   - Previous room client was in.
-     * @param roomId   - New room id.
-     * @return - JSON object.
-     */
-    private JSONObject buildRoomChangeJSON(String identity, String former, String roomId) {
-        HashMap<String, String> request = new HashMap<>();
-        request.put(ClientConstants.TYPE, ClientConstants.CHANGE_ROOM);
-        request.put(ClientConstants.IDENTITY, identity);
-        request.put(ClientConstants.FORMER_ROOM, former);
-        request.put(ClientConstants.ROOM_ID, roomId);
-        return new JSONObject(request);
-    }
-
-    /**
      * Change the room of an identity to a given room.
      *
      * @param room - Room to be assigned to.
@@ -563,9 +547,17 @@ public class ClientHandler extends Thread {
         for (ClientHandler client : clients) {
             if (client.getCurrentRoom().equals(currentRoom) || client.getCurrentRoom().equals(roomId)) {
                 logger.debug("Informing about room change of " + currentIdentity + " to " + client.currentIdentity);
-                JSONObject roomChangeRequest = buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
+                JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
                 Messaging.respond(roomChangeRequest, client.getClientSocket());
             }
+        }
+    }
+
+    public void forceQuitClient() {
+        if (ServerState.getServerState().isSmallPartitionFormed()) {
+            quitFlag = true;
+            JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, "");
+            Messaging.respond(roomChangeRequest, clientSocket);
         }
     }
 

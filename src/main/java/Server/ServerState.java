@@ -115,7 +115,10 @@ public class ServerState {
 
     public ConcurrentLinkedQueue<ClientHandler> getClientsInRoom(String roomId) {
         Room room = roomsHashMap.get(roomId);
-        return room.getClientIdentityList();
+        if (room != null) {
+            return room.getClientIdentityList();
+        }
+        return null;
     }
 
     public Room getMainHall() {
@@ -139,7 +142,9 @@ public class ServerState {
     }
 
     public void removeClientHandler(ClientHandler clientHandler) {
-        clientHandlerHashMap.remove(clientHandler.getId(), clientHandler);
+        if (clientHandlerHashMap.containsKey(clientHandler.getId())) {
+            clientHandlerHashMap.remove(clientHandler.getId(), clientHandler);
+        }
     }
 
     public ConcurrentHashMap<Long, ClientHandler> getClientHandlerHashMap() {
@@ -340,18 +345,30 @@ public class ServerState {
      *
      * @throws IOException
      */
-    public void purgeServerState() throws IOException {
+    public void purgeServerState() throws IOException, InterruptedException {
         if (smallPartitionFormed) {
             logger.info("Purging ServerState due to formation of a small partition.");
             currentLeader = null;
             disconnectClients();
+            Thread.sleep(4000);
             clientHandlerHashMap.clear();
-            roomsHashMap.clear();
+            removeRoomsExceptMainHall();
             identityList.clear();
             heartBeatMap.clear();
             failedServers.clear();
             // Confirm resetting heartbeat
             myHeartBeat = 0;
+        }
+    }
+
+    /**
+     * Remove all the rooms in the rooms map except for main hall.
+     */
+    private void removeRoomsExceptMainHall() {
+        for (Room room : roomsHashMap.values()) {
+            if (!room.getRoomId().equals(getMainHallIdString(serverId))) {
+                roomsHashMap.remove(room.getRoomId(), room);
+            }
         }
     }
 
@@ -367,7 +384,7 @@ public class ServerState {
         //Need to handle that scenario after testing.
 
         for (ClientHandler clientHandler : clientHandlerHashMap.values()) {
-            clientHandler.getClientSocket().close();
+            clientHandler.forceQuitClient();
         }
     }
 

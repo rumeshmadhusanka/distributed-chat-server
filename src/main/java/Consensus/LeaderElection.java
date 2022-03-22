@@ -1,7 +1,7 @@
 package Consensus;
 
 import Constants.ChatServerConstants.ServerConstants;
-import Messaging.Messaging;
+import Utilities.Messaging;
 import Server.Server;
 import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
