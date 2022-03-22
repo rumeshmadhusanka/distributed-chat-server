@@ -31,24 +31,6 @@ public class Util {
     }
 
     /**
-     * Inform servers about room creation/ deletion.
-     *
-     * @param kind   - Kind.
-     * @param roomId - Room Id.
-     * @param owner
-     */
-    public static void informServersRoom(String kind, String roomId, String owner) {
-        HashMap<String, String> request = new HashMap<>();
-        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.TYPE_GOSSIP);
-        request.put(ChatServerConstants.ServerConstants.KIND, kind);
-        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
-        request.put(ChatServerConstants.ServerConstants.ROOM_ID, roomId);
-        request.put(ChatServerConstants.ServerConstants.ROOM_OWNER, owner);
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        Messaging.sendAndForget(new JSONObject(request), servers);
-    }
-
-    /**
      * Create a JSON object to inform about room change to clients.
      *
      * @param identity - Identity of the client.
@@ -63,22 +45,6 @@ public class Util {
         request.put(ChatServerConstants.ClientConstants.FORMER_ROOM, former);
         request.put(ChatServerConstants.ClientConstants.ROOM_ID, roomId);
         return new JSONObject(request);
-    }
-
-    /**
-     * Inform servers about identity creation deletion.
-     *
-     * @param kind     - Kind.
-     * @param identity - Identity.
-     */
-    public static void informServersIdentity(String kind, String identity) {
-        HashMap<String, String> request = new HashMap<>();
-        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.TYPE_GOSSIP);
-        request.put(ChatServerConstants.ServerConstants.KIND, kind);
-        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
-        request.put(ChatServerConstants.ServerConstants.IDENTITY, identity);
-        Collection<Server> servers = ServerState.getServerState().getServers();
-        Messaging.sendAndForget(new JSONObject(request), servers);
     }
 
     /**

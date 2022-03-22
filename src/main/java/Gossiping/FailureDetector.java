@@ -4,7 +4,7 @@ import Constants.ChatServerConstants;
 import Constants.ServerProperties;
 import Server.Room;
 import Server.ServerState;
-import Utilities.Util;
+import Utilities.Messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,13 +49,13 @@ public class FailureDetector extends TimerTask {
                             Collection<Room> roomsList = ServerState.getServerState().getRoomsByServer(serverId);
                             for (Room room : roomsList) {
                                 ServerState.getServerState().removeRoom(room);
-                                Util.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_ROOM, room.getRoomId(), room.getOwner());
+                                Messaging.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_ROOM, room.getRoomId(), room.getOwner());
                             }
                             // Remove identities of small partition.
                             Collection<String> idList = ServerState.getServerState().getIdentityByServer(serverId);
                             for (String id : idList) {
                                 ServerState.getServerState().removeIdentity(id);
-                                Util.informServersIdentity(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_IDENTITY, id);
+                                Messaging.informServersIdentity(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_IDENTITY, id);
                             }
                         }
                     }

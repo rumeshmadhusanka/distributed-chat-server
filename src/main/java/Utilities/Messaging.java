@@ -6,6 +6,7 @@ import Constants.ChatServerConstants;
 import Constants.ServerProperties;
 import Exception.ServerException;
 import Server.Server;
+import Server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -20,6 +21,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -182,5 +184,53 @@ public class Messaging {
                 respond(roomChangeRequest, client.getClientSocket());
             }
         }
+    }
+
+    /**
+     * Inform other servers about client moving into a new server.
+     *
+     * @param identity - Identity.
+     */
+    public static void informServersAboutIdentityMove(String identity) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.IDENTITY_SERVER_CHANGE);
+        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ChatServerConstants.ServerConstants.IDENTITY, identity);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        sendAndForget(new JSONObject(request), servers);
+    }
+
+    /**
+     * Inform servers about identity creation deletion.
+     *
+     * @param kind     - Kind.
+     * @param identity - Identity.
+     */
+    public static void informServersIdentity(String kind, String identity) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.TYPE_GOSSIP);
+        request.put(ChatServerConstants.ServerConstants.KIND, kind);
+        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ChatServerConstants.ServerConstants.IDENTITY, identity);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        sendAndForget(new JSONObject(request), servers);
+    }
+
+    /**
+     * Inform servers about room creation/ deletion.
+     *
+     * @param kind   - Kind.
+     * @param roomId - Room Id.
+     * @param owner
+     */
+    public static void informServersRoom(String kind, String roomId, String owner) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.TYPE_GOSSIP);
+        request.put(ChatServerConstants.ServerConstants.KIND, kind);
+        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ChatServerConstants.ServerConstants.ROOM_ID, roomId);
+        request.put(ChatServerConstants.ServerConstants.ROOM_OWNER, owner);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        sendAndForget(new JSONObject(request), servers);
     }
 }

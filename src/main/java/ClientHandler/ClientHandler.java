@@ -167,7 +167,7 @@ public class ClientHandler extends Thread {
         // Add client to the main hall.
         changeRoom(mainHall);
         // Inform servers about new identity.
-        Util.informServersIdentity(ServerConstants.KIND_INFORM_NEW_IDENTITY, identity);
+        Messaging.informServersIdentity(ServerConstants.KIND_INFORM_NEW_IDENTITY, identity);
     }
 
     /**
@@ -212,7 +212,7 @@ public class ClientHandler extends Thread {
         changeRoom(ServerState.getServerState().getRoom(roomId));
 
         // Inform servers about new room.
-        Util.informServersRoom(ServerConstants.KIND_INFORM_NEW_ROOM, roomId, currentIdentity);
+        Messaging.informServersRoom(ServerConstants.KIND_INFORM_NEW_ROOM, roomId, currentIdentity);
     }
 
     /**
@@ -251,7 +251,7 @@ public class ClientHandler extends Thread {
 
         logger.info("Room: " + roomId + " deleted.");
         // Inform servers about delete room.
-        Util.informServersRoom(ServerConstants.KIND_INFORM_DELETE_ROOM, roomId, currentIdentity);
+        Messaging.informServersRoom(ServerConstants.KIND_INFORM_DELETE_ROOM, roomId, currentIdentity);
     }
 
     /**
@@ -431,7 +431,7 @@ public class ClientHandler extends Thread {
             ServerState.getServerState().removeClientHandler(this);
 
             // Informing servers about deleted identity.
-            Util.informServersIdentity(ServerConstants.KIND_INFORM_DELETE_IDENTITY, currentIdentity);
+            Messaging.informServersIdentity(ServerConstants.KIND_INFORM_DELETE_IDENTITY, currentIdentity);
 
             // Remove client information from current room.
             Room room = ServerState.getServerState().getRoom(currentRoom);
@@ -488,6 +488,10 @@ public class ClientHandler extends Thread {
             logger.info("Client connected to room: " + mjRoom + " via 'movejoin' from room: " + mjFormerRoom);
             changeRoom(room);
         }
+
+        logger.info("Informing other servers about " + currentIdentity + " moving into this server");
+        ServerState.getServerState().updateIdentity(currentIdentity, ServerState.getServerState().getServerId());
+        Messaging.informServersAboutIdentityMove(currentIdentity);
     }
 
     /**

@@ -122,8 +122,14 @@ public class ServerHandler extends Thread {
                 }
                 break;
             case ServerConstants.LEADER_STATE_MERGE:
-                logger.info("State Received from the leader.");
+                logger.info("State received from the leader.");
                 ServerState.getServerState().restoreServerState(jsonPayload);
+                break;
+            case ServerConstants.IDENTITY_SERVER_CHANGE:
+                String identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
+                String sId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
+                logger.info("Client: " + identity + " changing his into the server: " + sId);
+                ServerState.getServerState().updateIdentity(identity, sId);
                 break;
         }
     }
