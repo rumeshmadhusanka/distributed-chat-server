@@ -20,7 +20,6 @@
                 </Pattern>
             </PatternLayout>
             <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
-            <param name="Append" value="false" />
         </File>
 
         <File name="HB_FILE" fileName="logs/heartbeat.log">
@@ -29,7 +28,6 @@
                     DEBUG=blue, TRACE=white}] %l [%t{24}] %msg%n
                 </Pattern>
             </PatternLayout>
-            <param name="Append" value="false" />
         </File>
     </Appenders>
 
