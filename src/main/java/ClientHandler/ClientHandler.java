@@ -225,37 +225,20 @@ public class ClientHandler extends Thread {
 
         // Get room from server state.
         Room room = ServerState.getServerState().getRoom(roomId);
-        if (Util.isMainHall(roomId) || room == null || !currentIdentity.equals(room.getOwner()) || !currentRoom.equals(roomId)) {
+        if (Util.isMainHall(roomId) || room == null || !currentIdentity.equals(room.getOwner())) {
             logger.info("Unable to delete room: " + roomId);
             response = Util.buildApprovedJSONRoom(ClientConstants.TYPE_DELETE_ROOM, ClientConstants.FALSE, roomId);
             Messaging.respond(response, this.clientSocket);
             return;
         }
-        // Get clients in the room.
-        Collection<ClientHandler> roomClients = ServerState.getServerState().getClientsInRoom(roomId);
 
-        // Get mainHall from the ServerState.
-        Room mainHall = ServerState.getServerState().getMainHall();
-        Collection<ClientHandler> mainHallClients = mainHall.getClientIdentityList();
-        // Duplicate client list of main hall.
-        Collection<ClientHandler> tempRoomClients = new ArrayList<>(mainHallClients);
-
-        // Move all the client in the room to main hall.
-        for (ClientHandler client : roomClients) {
-            String prevRoom = client.getCurrentRoom();
-            mainHall.addClient(client);
-            client.setCurrentRoom(mainHall.getRoomId());
-            // Send room change request to client.
-            JSONObject roomChangeRequest = Util.buildRoomChangeJSON(
-                    client.getCurrentIdentity(), room.getRoomId(), mainHall.getRoomId());
-            Messaging.respond(roomChangeRequest, client.getClientSocket());
-            // Inform MainHall members about room change of clients.
-            broadcastClientChangeRoom(tempRoomClients, client.getCurrentIdentity(), prevRoom, mainHall.getRoomId());
+        // Remove clients from the room, if the room is hosted in this server.
+        if (room.getServerId().equals(ServerState.getServerState().getServerId())) {
+            room.removeClientsFromRoom();
         }
-        // Update mainHall in ServerState.
-        ServerState.getServerState().updateRoom(mainHall);
 
         // Set current room.
+        Room mainHall = ServerState.getServerState().getMainHall();
         currentRoom = mainHall.getRoomId();
 
         // Remove the room from ServerState.
@@ -353,22 +336,6 @@ public class ClientHandler extends Thread {
             if (client.getCurrentRoom().equals(currentRoom) || client.getCurrentRoom().equals(roomId)) {
                 logger.debug("Informing about room change of " + currentIdentity + " to " + client.currentIdentity);
                 JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
-                Messaging.respond(roomChangeRequest, client.getClientSocket());
-            }
-        }
-    }
-
-    /**
-     * Inform a set of clients.
-     *
-     * @param clients Collection clients.
-     * @param roomId  New joining room id.
-     */
-    private void broadcastClientChangeRoom(Collection<ClientHandler> clients, String clientIdentity, String prevRoom, String roomId) {
-        for (ClientHandler client : clients) {
-            if (client.getCurrentRoom().equals(roomId)) {
-                logger.debug("Informing about room change of " + clientIdentity + " to " + client.getCurrentIdentity());
-                JSONObject roomChangeRequest = Util.buildRoomChangeJSON(clientIdentity, prevRoom, roomId);
                 Messaging.respond(roomChangeRequest, client.getClientSocket());
             }
         }
@@ -478,11 +445,11 @@ public class ClientHandler extends Thread {
         }
     }
 
-    private void deleteRoomOfClient(){
+    private void deleteRoomOfClient() {
         Collection<Room> clientOwnRooms = ServerState.getServerState().getRoomsByOwner(currentIdentity);
-        if(!clientOwnRooms.isEmpty()){
-            for (Room ownedRoom: clientOwnRooms) {
-                if(!ownedRoom.getRoomId().equals(currentRoom)){
+        if (!clientOwnRooms.isEmpty()) {
+            for (Room ownedRoom : clientOwnRooms) {
+                if (!ownedRoom.getRoomId().equals(currentRoom)) {
 
                 }
             }

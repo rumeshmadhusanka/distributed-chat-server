@@ -36,7 +36,7 @@ public class ServerHandler extends Thread {
             InputStream inputFromClient = serverSocket.getInputStream();
             Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
             String line = serverInputScanner.nextLine();
-            logger.debug("Received: " + line);
+            logger.trace("Received: " + line);
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonPayload = (JSONObject) jsonParser.parse(line);
             resolveServerRequest(jsonPayload);
@@ -61,12 +61,15 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_CONSENSUS:
                 switch (kind) {
                     case ServerConstants.KIND_VERIFY_UNIQUE:
+                        logger.info("Consensus: Unique value verification request received.");
                         verifyUnique(jsonPayload);
                         break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
+                        logger.info("Consensus: New identity creation request received to leader.");
                         handleRequestToCreate(jsonPayload, ServerConstants.IDENTITY);
                         break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
+                        logger.info("Consensus: New room creation request received to leader.");
                         handleRequestToCreate(jsonPayload, ServerConstants.ROOM_ID);
                         break;
                 }
@@ -74,18 +77,22 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_GOSSIP:
                 switch (kind) {
                     case ServerConstants.KIND_INFORM_NEW_IDENTITY:
+                        logger.info("Gossiping: New identity creation information received.");
                         addNewIdentity(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_DELETE_IDENTITY:
+                        logger.info("Gossiping: Identity deletion information received.");
                         deleteIdentity(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_NEW_ROOM:
+                        logger.info("Gossiping: New room creation information received.");
                         addNewRoom(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
+                        logger.info("Gossiping: Room deletion information received.");
                         deleteRoom(jsonPayload);
                         break;
 
@@ -109,7 +116,7 @@ public class ServerHandler extends Thread {
                         break;
 
                     case ServerConstants.KIND_COORDINATOR:
-                        logger.debug("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
                         break;
                 }
@@ -158,7 +165,14 @@ public class ServerHandler extends Thread {
      * @param jsonPayload - JSON payload.
      */
     private void deleteRoom(JSONObject jsonPayload) {
-        Room delRoom = getRoomFromRequest(jsonPayload);
+        String delRoomId = extractRoomIdFromRequest(jsonPayload);
+        Room delRoom = ServerState.getServerState().getRoom(delRoomId);
+        // Remove clients from the room, if the room is hosted in this server.
+        if (delRoom.getServerId().equals(ServerState.getServerState().getServerId())) {
+            logger.info("Removing clients from room before deletion");
+            delRoom.removeClientsFromRoom();
+        }
+
         ServerState.getServerState().removeRoom(delRoom);
     }
 
@@ -173,6 +187,16 @@ public class ServerHandler extends Thread {
         String serverId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
         String owner = (String) jsonPayload.get(ServerConstants.ROOM_OWNER);
         return new Room(serverId, roomId, owner);
+    }
+
+    /**
+     * Extract room from a JSON payload with correct serverId for deletion purposes.
+     *
+     * @param jsonPayload - JSON payload.
+     * @return - Room object.
+     */
+    private String extractRoomIdFromRequest(JSONObject jsonPayload) {
+        return (String) jsonPayload.get(ServerConstants.ROOM_ID);
     }
 
     /**

@@ -1,5 +1,6 @@
 package Utilities;
 
+import ClientHandler.ClientHandler;
 import Consensus.Leader;
 import Constants.ChatServerConstants;
 import Constants.ServerProperties;
@@ -165,5 +166,21 @@ public class Messaging {
         dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
         socket.close();
+    }
+
+    /**
+     * Inform a set of clients.
+     *
+     * @param clients Collection clients.
+     * @param roomId  New joining room id.
+     */
+    public static void broadcastClientChangeRoom(Collection<ClientHandler> clients, String clientIdentity, String prevRoom, String roomId) {
+        for (ClientHandler client : clients) {
+            if (client.getCurrentRoom().equals(roomId)) {
+                logger.debug("Informing about room change of " + clientIdentity + " to " + client.getCurrentIdentity());
+                JSONObject roomChangeRequest = Util.buildRoomChangeJSON(clientIdentity, prevRoom, roomId);
+                respond(roomChangeRequest, client.getClientSocket());
+            }
+        }
     }
 }
