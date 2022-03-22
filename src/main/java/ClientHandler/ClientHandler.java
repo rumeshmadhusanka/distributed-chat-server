@@ -237,9 +237,11 @@ public class ClientHandler extends Thread {
             room.removeClientsFromRoom();
         }
 
-        // Set current room.
-        Room mainHall = ServerState.getServerState().getMainHall();
-        currentRoom = mainHall.getRoomId();
+        // Set current room on if client is not quitting at the moment.
+        if (!quitFlag) {
+            Room mainHall = ServerState.getServerState().getMainHall();
+            currentRoom = mainHall.getRoomId();
+        }
 
         // Remove the room from ServerState.
         ServerState.getServerState().removeRoom(room);
@@ -436,12 +438,14 @@ public class ClientHandler extends Thread {
             logger.debug("Current room:" + currentRoom);
             if (room.getOwner().equals(currentIdentity)) {
                 logger.debug("Deleting room: " + currentRoom + " since it is owned by " + currentIdentity);
+                room.removeClient(this);
                 deleteRoom(room.getRoomId());
             } else {
                 logger.debug("Removing identity from room: " + currentRoom);
                 room.removeClient(this);
                 ServerState.getServerState().updateRoom(room);
             }
+            deleteRoomOfClient();
         }
     }
 
@@ -450,7 +454,7 @@ public class ClientHandler extends Thread {
         if (!clientOwnRooms.isEmpty()) {
             for (Room ownedRoom : clientOwnRooms) {
                 if (!ownedRoom.getRoomId().equals(currentRoom)) {
-
+                    deleteRoom(ownedRoom.getRoomId());
                 }
             }
         }
