@@ -64,4 +64,78 @@ public class Util {
         request.put(ChatServerConstants.ClientConstants.ROOM_ID, roomId);
         return new JSONObject(request);
     }
+
+    /**
+     * Inform servers about identity creation deletion.
+     *
+     * @param kind     - Kind.
+     * @param identity - Identity.
+     */
+    public static void informServersIdentity(String kind, String identity) {
+        HashMap<String, String> request = new HashMap<>();
+        request.put(ChatServerConstants.ServerConstants.TYPE, ChatServerConstants.ServerConstants.TYPE_GOSSIP);
+        request.put(ChatServerConstants.ServerConstants.KIND, kind);
+        request.put(ChatServerConstants.ServerConstants.SERVER_ID, ServerState.getServerState().getServerId());
+        request.put(ChatServerConstants.ServerConstants.IDENTITY, identity);
+        Collection<Server> servers = ServerState.getServerState().getServers();
+        Messaging.sendAndForget(new JSONObject(request), servers);
+    }
+
+    /**
+     * Check whether a given room is the main hall.
+     *
+     * @param roomId - Room id.
+     * @return - Boolean value.
+     */
+    public static boolean isMainHall(String roomId) {
+        return roomId.equals(ServerState.getServerState().getMainHall().getRoomId());
+    }
+
+    /**
+     * Create a response JSON object for create identity scenario.
+     *
+     * @param approved - Boolean value indicating whether the identity was approved or not.
+     * @return -  Response JSON object.
+     */
+    public static JSONObject buildApprovedJSONId(String approved) {
+        HashMap<String, String> response = new HashMap<>();
+        response.put(ChatServerConstants.ClientConstants.TYPE, ChatServerConstants.ClientConstants.TYPE_CREATE_ID);
+        response.put(ChatServerConstants.ClientConstants.APPROVED, approved);
+        return new JSONObject(response);
+    }
+
+    /**
+     * Create a response JSON object for create room scenario.
+     *
+     * @param type     - Approved type.
+     * @param approved - Boolean value indicating whether the room id was approved or not.
+     * @return -  Response JSON object.
+     */
+    public static JSONObject buildApprovedJSONRoom(String type, String approved, String roomId) {
+        HashMap<String, String> response = new HashMap<>();
+        response.put(ChatServerConstants.ClientConstants.TYPE, type);
+        response.put(ChatServerConstants.ClientConstants.APPROVED, approved);
+        response.put(ChatServerConstants.ClientConstants.ROOM_ID, roomId);
+        return new JSONObject(response);
+    }
+
+    /**
+     * Extract room id value from request.
+     *
+     * @param jsonPayload - JSON payload.
+     * @return - Room id extracted.
+     */
+    public static String getRoomId(JSONObject jsonPayload) {
+        return (String) jsonPayload.get(ChatServerConstants.ClientConstants.ROOM_ID);
+    }
+
+    /**
+     * Check whether a given string adheres to the criteria.
+     *
+     * @param value - Identity or Room id.
+     * @return - Boolean value.
+     */
+    public static boolean meetsCriteria(String value) {
+        return ((value.length() < 3) || (value.length() > 16) || !Character.isLetter(value.charAt(0)));
+    }
 }

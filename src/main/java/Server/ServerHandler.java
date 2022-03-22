@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class ServerHandler extends Thread {
-    //TODO: Implement Server-server communication (Similar to client-server)
-
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
     private final Socket serverSocket;
@@ -106,7 +104,6 @@ public class ServerHandler extends Thread {
 
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
-                        // TODO
                         logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
                         break;

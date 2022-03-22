@@ -382,7 +382,6 @@ public class ServerState {
         //TODO:
         //Closing the socket here might throw an SocketException in either ClientHandler or main.
         //Need to handle that scenario after testing.
-
         for (ClientHandler clientHandler : clientHandlerHashMap.values()) {
             clientHandler.forceQuitClient();
         }
