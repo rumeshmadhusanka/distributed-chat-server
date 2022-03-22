@@ -43,11 +43,19 @@ public class FailureDetector extends TimerTask {
                 if (failedServersId.size() != 0) {
                     logger.trace("Partition has created. This server is in the large partition");
                     if (ServerState.getServerState().amITheLeader()) {
+                        logger.info("Removing identities and rooms of servers in small partition.");
                         for (String serverId : failedServersId) {
+                            // Remove rooms of small partition.
                             Collection<Room> roomsList = ServerState.getServerState().getRoomsByServer(serverId);
                             for (Room room : roomsList) {
                                 ServerState.getServerState().removeRoom(room);
                                 Util.informServersRoom(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_ROOM, room.getRoomId(), room.getOwner());
+                            }
+                            // Remove identities of small partition.
+                            Collection<String> idList = ServerState.getServerState().getIdentityByServer(serverId);
+                            for (String id : idList) {
+                                ServerState.getServerState().removeIdentity(id);
+                                Util.informServersIdentity(ChatServerConstants.ServerConstants.KIND_INFORM_DELETE_IDENTITY, id);
                             }
                         }
                     }

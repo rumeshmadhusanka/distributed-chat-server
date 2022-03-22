@@ -421,6 +421,16 @@ public class ServerState {
         identityHashMap.remove(identity);
     }
 
+    public Collection<String> getIdentityByServer(String sId) {
+        Collection<String> identities = new ArrayList<>();
+        for (Map.Entry<String, String> entry : identityHashMap.entrySet()) {
+            if(sId.equals(entry.getValue())){
+                identities.add(entry.getKey());
+            }
+        }
+        return identities;
+    }
+
     public ConcurrentHashMap<String, String> getIdentityHashMap() {
         return identityHashMap;
     }
