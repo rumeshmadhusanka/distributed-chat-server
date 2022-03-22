@@ -155,7 +155,7 @@ public class ClientHandler extends Thread {
             return;
         }
         // Add identity to server state.
-        ServerState.getServerState().addIdentity(identity);
+        ServerState.getServerState().addIdentity(identity, ServerState.getServerState().getServerId());
         // Send the current identity for the client handler.
         currentIdentity = identity;
         // Send appropriate response back to client.
@@ -427,7 +427,7 @@ public class ClientHandler extends Thread {
 
             // Remove client from server state.
             logger.debug("Removing identity and client handler from ServerState");
-            ServerState.getServerState().deleteIdentity(currentIdentity);
+            ServerState.getServerState().removeIdentity(currentIdentity);
             ServerState.getServerState().removeClientHandler(this);
 
             // Informing servers about deleted identity.

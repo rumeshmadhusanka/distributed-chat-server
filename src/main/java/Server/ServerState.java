@@ -20,7 +20,8 @@ public class ServerState {
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
     // TODO: Change identityList into a HashMap to keep the serverIds.
-    private final ConcurrentLinkedQueue<String> identityList = new ConcurrentLinkedQueue<>(); // unique client identifies
+    // unique client identifies
+    private final ConcurrentHashMap<String, String> identityHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
     private final ConcurrentLinkedQueue<String> failedServers = new ConcurrentLinkedQueue<>(); // store failed servers
     private boolean smallPartitionFormed = false;
@@ -195,22 +196,6 @@ public class ServerState {
         this.currentLeader = currentLeader;
     }
 
-    public void addIdentity(String identity) {
-        this.identityList.add(identity);
-    }
-
-    public ConcurrentLinkedQueue<String> getIdentityList() {
-        return identityList;
-    }
-
-    public boolean hasIdentity(String identity) {
-        return identityList.contains(identity);
-    }
-
-    public void deleteIdentity(String identity) {
-        identityList.remove(identity);
-    }
-
     public ConcurrentHashMap<String, Long> getHeartbeatMap() {
         return heartBeatMap;
     }
@@ -267,7 +252,7 @@ public class ServerState {
 
         // TODO: change the code to reflect the datatype change in identityList.
         // Serialize identity list.
-        serverState.put("IdentityList", serialize(new ArrayList<>(identityList)));
+        serverState.put("IdentityMap", serialize(identityHashMap));
 
         // Rooms belonging to current server contains the ClientHandler list. Need to remove that before serializing.
         ArrayList<Room> tempRooms = new ArrayList<>();
@@ -289,12 +274,12 @@ public class ServerState {
     public void restoreServerState(JSONObject jsonObject) throws IOException, ClassNotFoundException {
 
         logger.info("Restoring ServerState using data sent by the leader.");
-        String identityString = (String) jsonObject.get("IdentityList");
+        String identityString = (String) jsonObject.get("IdentityMap");
         String roomString = (String) jsonObject.get("RoomList");
 
-        Collection<String> tempIdList = (Collection<String>) deserialize(identityString);
-        if (identityList.isEmpty()) {
-            identityList.addAll(tempIdList);
+        ConcurrentHashMap<String, String> tempIdList = (ConcurrentHashMap<String, String>) deserialize(identityString);
+        if (identityHashMap.isEmpty()) {
+            identityHashMap.putAll(tempIdList);
         }
 
         ArrayList<Room> tempRoomList = (ArrayList<Room>) deserialize(roomString);
@@ -353,7 +338,7 @@ public class ServerState {
             Thread.sleep(4000);
             clientHandlerHashMap.clear();
             removeRoomsExceptMainHall();
-            identityList.clear();
+            identityHashMap.clear();
             heartBeatMap.clear();
             failedServers.clear();
             // Confirm resetting heartbeat
@@ -414,5 +399,29 @@ public class ServerState {
             }
         }
         return serverRoomList;
+    }
+
+    public void addIdentity(String identity, String serverId) {
+        if (!identityHashMap.containsKey(identity)) {
+            this.identityHashMap.put(identity, serverId);
+        }
+    }
+
+    public void updateIdentity(String identity, String serverId) {
+        if (identityHashMap.containsKey(identity)) {
+            this.identityHashMap.put(identity, serverId);
+        }
+    }
+
+    public boolean containsIdentity(String identity) {
+        return identityHashMap.containsKey(identity);
+    }
+
+    public void removeIdentity(String identity) {
+        identityHashMap.remove(identity);
+    }
+
+    public ConcurrentHashMap<String, String> getIdentityHashMap() {
+        return identityHashMap;
     }
 }

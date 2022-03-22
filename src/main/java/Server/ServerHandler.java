@@ -135,7 +135,8 @@ public class ServerHandler extends Thread {
      */
     private void addNewIdentity(JSONObject jsonPayload) {
         String identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
-        ServerState.getServerState().addIdentity(identity);
+        String serverId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
+        ServerState.getServerState().addIdentity(identity, serverId);
     }
 
     /**
@@ -146,7 +147,7 @@ public class ServerHandler extends Thread {
     private void deleteIdentity(JSONObject jsonPayload) {
         String identity;
         identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
-        ServerState.getServerState().deleteIdentity(identity);
+        ServerState.getServerState().removeIdentity(identity);
     }
 
     /**
@@ -213,7 +214,7 @@ public class ServerHandler extends Thread {
         if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
             value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
             valueType = ServerConstants.IDENTITY;
-            isAvailable = !ServerState.getServerState().hasIdentity(value);
+            isAvailable = !ServerState.getServerState().containsIdentity(value);
         } else {
             value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
             valueType = ServerConstants.ROOM_ID;
