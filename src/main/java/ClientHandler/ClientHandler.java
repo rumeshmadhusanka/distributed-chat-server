@@ -225,7 +225,7 @@ public class ClientHandler extends Thread {
 
         // Get room from server state.
         Room room = ServerState.getServerState().getRoom(roomId);
-        if (Util.isMainHall(roomId) || room == null || !currentIdentity.equals(room.getOwner())) {
+        if (Util.isMainHall(roomId) || room == null || !currentIdentity.equals(room.getOwner()) || !currentRoom.equals(roomId)) {
             logger.info("Unable to delete room: " + roomId);
             response = Util.buildApprovedJSONRoom(ClientConstants.TYPE_DELETE_ROOM, ClientConstants.FALSE, roomId);
             Messaging.respond(response, this.clientSocket);
@@ -242,22 +242,22 @@ public class ClientHandler extends Thread {
 
         // Move all the client in the room to main hall.
         for (ClientHandler client : roomClients) {
+            String prevRoom = client.getCurrentRoom();
             mainHall.addClient(client);
             client.setCurrentRoom(mainHall.getRoomId());
+            // Send room change request to client.
             JSONObject roomChangeRequest = Util.buildRoomChangeJSON(
                     client.getCurrentIdentity(), room.getRoomId(), mainHall.getRoomId());
             Messaging.respond(roomChangeRequest, client.getClientSocket());
+            // Inform MainHall members about room change of clients.
+            broadcastClientChangeRoom(tempRoomClients, client.getCurrentIdentity(), prevRoom, mainHall.getRoomId());
+
         }
         // Update mainHall in ServerState.
         ServerState.getServerState().updateRoom(mainHall);
 
-        // Inform clients in main hall.
-        informClientChangeRoom(tempRoomClients, mainHall.getRoomId());
-
-        if (roomId.equals(currentRoom)) {
-            // Set current room.
-            currentRoom = mainHall.getRoomId();
-        }
+        // Set current room.
+        currentRoom = mainHall.getRoomId();
 
         // Remove the room from ServerState.
         ServerState.getServerState().removeRoom(room);
@@ -354,6 +354,22 @@ public class ClientHandler extends Thread {
             if (client.getCurrentRoom().equals(currentRoom) || client.getCurrentRoom().equals(roomId)) {
                 logger.debug("Informing about room change of " + currentIdentity + " to " + client.currentIdentity);
                 JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
+                Messaging.respond(roomChangeRequest, client.getClientSocket());
+            }
+        }
+    }
+
+    /**
+     * Inform a set of clients.
+     *
+     * @param clients Collection clients.
+     * @param roomId  New joining room id.
+     */
+    private void broadcastClientChangeRoom(Collection<ClientHandler> clients, String clientIdentity, String prevRoom, String roomId) {
+        for (ClientHandler client : clients) {
+            if (client.getCurrentRoom().equals(roomId)) {
+                logger.debug("Informing about room change of " + clientIdentity + " to " + client.getCurrentIdentity());
+                JSONObject roomChangeRequest = Util.buildRoomChangeJSON(clientIdentity, prevRoom, roomId);
                 Messaging.respond(roomChangeRequest, client.getClientSocket());
             }
         }
