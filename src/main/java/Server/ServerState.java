@@ -395,4 +395,14 @@ public class ServerState {
     private String getMainHallIdString(String sId) {
         return ChatServerConstants.ServerConstants.MAIN_HALL + sId;
     }
+
+    public Collection<Room> getRoomsByOwner(String owner){
+        Collection<Room> roomListOwned = new ArrayList<>();
+        for (Room room: roomsHashMap.values()) {
+            if(room.getOwner().equals(owner)){
+                roomListOwned.add(room);
+            }
+        }
+        return roomListOwned;
+    }
 }

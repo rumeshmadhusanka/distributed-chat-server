@@ -251,7 +251,6 @@ public class ClientHandler extends Thread {
             Messaging.respond(roomChangeRequest, client.getClientSocket());
             // Inform MainHall members about room change of clients.
             broadcastClientChangeRoom(tempRoomClients, client.getCurrentIdentity(), prevRoom, mainHall.getRoomId());
-
         }
         // Update mainHall in ServerState.
         ServerState.getServerState().updateRoom(mainHall);
@@ -475,6 +474,17 @@ public class ClientHandler extends Thread {
                 logger.debug("Removing identity from room: " + currentRoom);
                 room.removeClient(this);
                 ServerState.getServerState().updateRoom(room);
+            }
+        }
+    }
+
+    private void deleteRoomOfClient(){
+        Collection<Room> clientOwnRooms = ServerState.getServerState().getRoomsByOwner(currentIdentity);
+        if(!clientOwnRooms.isEmpty()){
+            for (Room ownedRoom: clientOwnRooms) {
+                if(!ownedRoom.getRoomId().equals(currentRoom)){
+
+                }
             }
         }
     }
