@@ -4,10 +4,10 @@ import Consensus.Consensus;
 import Constants.ChatServerConstants.ClientConstants;
 import Constants.ChatServerConstants.ServerConstants;
 import Exception.ServerException;
-import Utilities.Messaging;
 import Server.Room;
 import Server.Server;
 import Server.ServerState;
+import Utilities.Messaging;
 import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -550,6 +550,14 @@ public class ClientHandler extends Thread {
                 JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, roomId);
                 Messaging.respond(roomChangeRequest, client.getClientSocket());
             }
+        }
+    }
+
+    public void forceQuitClient() {
+        if (ServerState.getServerState().isSmallPartitionFormed()) {
+            quitFlag = true;
+            JSONObject roomChangeRequest = Util.buildRoomChangeJSON(currentIdentity, currentRoom, "");
+            Messaging.respond(roomChangeRequest, clientSocket);
         }
     }
 

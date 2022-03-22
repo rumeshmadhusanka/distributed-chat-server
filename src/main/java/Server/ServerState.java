@@ -350,7 +350,7 @@ public class ServerState {
             logger.info("Purging ServerState due to formation of a small partition.");
             currentLeader = null;
             disconnectClients();
-            Thread.sleep(3000);
+            Thread.sleep(4000);
             clientHandlerHashMap.clear();
             removeRoomsExceptMainHall();
             identityList.clear();
@@ -384,7 +384,7 @@ public class ServerState {
         //Need to handle that scenario after testing.
 
         for (ClientHandler clientHandler : clientHandlerHashMap.values()) {
-            clientHandler.getClientSocket().close();
+            clientHandler.forceQuitClient();
         }
     }
 

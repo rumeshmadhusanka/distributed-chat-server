@@ -95,6 +95,7 @@ public class Main {
                 logger.debug("Starting client handler.");
                 clientHandler.start();
             } else {
+                logger.info("Client connection terminated since server is in the small partition.");
                 clientSocket.getOutputStream().close();
                 clientSocket.close();
             }
