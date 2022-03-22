@@ -1,9 +1,9 @@
 package Gossiping;
 
 import Constants.ChatServerConstants.ServerConstants;
-import Utilities.Messaging;
 import Server.Server;
 import Server.ServerState;
+import Utilities.Messaging;
 import Utilities.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

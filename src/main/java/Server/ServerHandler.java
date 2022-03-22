@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class ServerHandler extends Thread {
-    //TODO: Implement Server-server communication (Similar to client-server)
-
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
 
     private final Socket serverSocket;
@@ -63,12 +61,15 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_CONSENSUS:
                 switch (kind) {
                     case ServerConstants.KIND_VERIFY_UNIQUE:
+                        logger.info("Consensus: Unique value verification request received.");
                         verifyUnique(jsonPayload);
                         break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_IDENTITY:
+                        logger.info("Consensus: New identity creation request received to leader.");
                         handleRequestToCreate(jsonPayload, ServerConstants.IDENTITY);
                         break;
                     case ServerConstants.KIND_REQUEST_TO_CREATE_NEW_ROOM:
+                        logger.info("Consensus: New room creation request received to leader.");
                         handleRequestToCreate(jsonPayload, ServerConstants.ROOM_ID);
                         break;
                 }
@@ -76,18 +77,22 @@ public class ServerHandler extends Thread {
             case ServerConstants.TYPE_GOSSIP:
                 switch (kind) {
                     case ServerConstants.KIND_INFORM_NEW_IDENTITY:
+                        logger.info("Gossiping: New identity creation information received.");
                         addNewIdentity(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_DELETE_IDENTITY:
+                        logger.info("Gossiping: Identity deletion information received.");
                         deleteIdentity(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_NEW_ROOM:
+                        logger.info("Gossiping: New room creation information received.");
                         addNewRoom(jsonPayload);
                         break;
 
                     case ServerConstants.KIND_INFORM_DELETE_ROOM:
+                        logger.info("Gossiping: Room deletion information received.");
                         deleteRoom(jsonPayload);
                         break;
 
@@ -106,20 +111,25 @@ public class ServerHandler extends Thread {
 
                     case ServerConstants.KIND_ELECTED:
                         // This server received elected message
-                        // TODO
                         logger.trace("Received ELECTED to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.respondToElectedMessage();
                         break;
 
                     case ServerConstants.KIND_COORDINATOR:
-                        logger.debug("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
+                        logger.trace("Received COORDINATOR to: " + ServerState.getServerState().getServerId() + " by: " + jsonPayload.get(ServerConstants.SERVER_ID));
                         LeaderElection.receiveCoordinator(jsonPayload);
                         break;
                 }
                 break;
             case ServerConstants.LEADER_STATE_MERGE:
-                logger.info("State Received from the leader.");
+                logger.info("State received from the leader.");
                 ServerState.getServerState().restoreServerState(jsonPayload);
+                break;
+            case ServerConstants.IDENTITY_SERVER_CHANGE:
+                String identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
+                String sId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
+                logger.info("Client: " + identity + " changing his into the server: " + sId);
+                ServerState.getServerState().updateIdentity(identity, sId);
                 break;
         }
     }
@@ -131,7 +141,8 @@ public class ServerHandler extends Thread {
      */
     private void addNewIdentity(JSONObject jsonPayload) {
         String identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
-        ServerState.getServerState().addIdentity(identity);
+        String serverId = (String) jsonPayload.get(ServerConstants.SERVER_ID);
+        ServerState.getServerState().addIdentity(identity, serverId);
     }
 
     /**
@@ -142,7 +153,7 @@ public class ServerHandler extends Thread {
     private void deleteIdentity(JSONObject jsonPayload) {
         String identity;
         identity = (String) jsonPayload.get(ServerConstants.IDENTITY);
-        ServerState.getServerState().deleteIdentity(identity);
+        ServerState.getServerState().removeIdentity(identity);
     }
 
     /**
@@ -161,8 +172,16 @@ public class ServerHandler extends Thread {
      * @param jsonPayload - JSON payload.
      */
     private void deleteRoom(JSONObject jsonPayload) {
-        Room delRoom = getRoomFromRequest(jsonPayload);
-        ServerState.getServerState().removeRoom(delRoom);
+        String delRoomId = extractRoomIdFromRequest(jsonPayload);
+        Room delRoom = ServerState.getServerState().getRoom(delRoomId);
+        // Remove clients from the room, if the room is hosted in this server.
+        if (delRoom != null) {
+            if (delRoom.getServerId().equals(ServerState.getServerState().getServerId())) {
+                logger.info("Removing clients from room before deletion");
+                delRoom.removeClientsFromRoom();
+            }
+            ServerState.getServerState().removeRoom(delRoom);
+        }
     }
 
     /**
@@ -179,6 +198,16 @@ public class ServerHandler extends Thread {
     }
 
     /**
+     * Extract room from a JSON payload with correct serverId for deletion purposes.
+     *
+     * @param jsonPayload - JSON payload.
+     * @return - Room object.
+     */
+    private String extractRoomIdFromRequest(JSONObject jsonPayload) {
+        return (String) jsonPayload.get(ServerConstants.ROOM_ID);
+    }
+
+    /**
      * Verify whether the given value is unique or not.
      *
      * @param jsonPayload - JSON payload.
@@ -191,7 +220,7 @@ public class ServerHandler extends Thread {
         if (jsonPayload.containsKey(ServerConstants.IDENTITY)) {
             value = String.valueOf(jsonPayload.get(ServerConstants.IDENTITY));
             valueType = ServerConstants.IDENTITY;
-            isAvailable = !ServerState.getServerState().hasIdentity(value);
+            isAvailable = !ServerState.getServerState().containsIdentity(value);
         } else {
             value = String.valueOf(jsonPayload.get(ServerConstants.ROOM_ID));
             valueType = ServerConstants.ROOM_ID;

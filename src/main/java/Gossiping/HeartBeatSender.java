@@ -1,9 +1,9 @@
 package Gossiping;
 
 import Constants.ChatServerConstants.ServerConstants;
-import Utilities.Messaging;
 import Server.Server;
 import Server.ServerState;
+import Utilities.Messaging;
 import org.json.simple.JSONObject;
 
 import java.util.Collection;

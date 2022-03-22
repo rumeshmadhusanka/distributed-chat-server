@@ -50,6 +50,7 @@ public class ChatServerConstants {
         public static final String KIND_HEARTBEAT = "heartbeat";
         public static final String TIMESTAMP = "timestamp";
         public static final String LEADER_STATE_MERGE = "leaderstatemerge";
+        public static final String IDENTITY_SERVER_CHANGE = "identityserverchange";
     }
 
     /**
