@@ -8,10 +8,6 @@ public class ServerException extends Exception {
         this.code = code;
     }
 
-    public ServerException(String message, Throwable throwable) {
-        super(message, throwable);
-    }
-
     public String getCode() {
         return code;
     }

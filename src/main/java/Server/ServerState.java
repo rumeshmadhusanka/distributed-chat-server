@@ -19,9 +19,7 @@ public class ServerState {
     private final ConcurrentHashMap<Long, ClientHandler> clientHandlerHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Room> roomsHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Server> serversHashmap = new ConcurrentHashMap<>(); // has all the Servers; dead and alive; except this
-    // TODO: Change identityList into a HashMap to keep the serverIds.
-    // unique client identifies
-    private final ConcurrentHashMap<String, String> identityHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> identityHashMap = new ConcurrentHashMap<>(); // unique client identifies
     private final ConcurrentHashMap<String, Long> heartBeatMap = new ConcurrentHashMap<>(); //store heartbeats of servers
     private final ConcurrentLinkedQueue<String> failedServers = new ConcurrentLinkedQueue<>(); // store failed servers
     private boolean smallPartitionFormed = false;
@@ -90,7 +88,7 @@ public class ServerState {
             }
         }
         if (serverId.equals(this.serverId)) {
-            return new Server(this.serverId, this.serverAddress, this.coordinationPort, this.clientsPort); //todo check coordination port or clients port
+            return new Server(this.serverId, this.serverAddress, this.coordinationPort, this.clientsPort);
         }
         return null;
     }
@@ -250,7 +248,6 @@ public class ServerState {
     public HashMap<String, String> getCurrentServerState() throws IOException {
         HashMap<String, String> serverState = new HashMap<>();
 
-        // TODO: change the code to reflect the datatype change in identityList.
         // Serialize identity list.
         serverState.put("IdentityMap", serialize(identityHashMap));
 
@@ -364,9 +361,6 @@ public class ServerState {
      */
     private void disconnectClients() throws IOException {
 
-        //TODO:
-        //Closing the socket here might throw an SocketException in either ClientHandler or main.
-        //Need to handle that scenario after testing.
         for (ClientHandler clientHandler : clientHandlerHashMap.values()) {
             clientHandler.forceQuitClient();
         }
@@ -424,7 +418,7 @@ public class ServerState {
     public Collection<String> getIdentityByServer(String sId) {
         Collection<String> identities = new ArrayList<>();
         for (Map.Entry<String, String> entry : identityHashMap.entrySet()) {
-            if(sId.equals(entry.getValue())){
+            if (sId.equals(entry.getValue())) {
                 identities.add(entry.getKey());
             }
         }

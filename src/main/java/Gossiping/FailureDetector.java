@@ -37,7 +37,6 @@ public class FailureDetector extends TimerTask {
                 ServerState.getServerState().setSmallPartitionFormed(true);
                 ServerState.getServerState().purgeServerState();
             } else {
-                // TODO: Larger partition needs to remove identities.
                 // Start election()
                 ConcurrentLinkedQueue<String> failedServersId = ServerState.getServerState().getFailedServers();
                 if (failedServersId.size() != 0) {
