@@ -51,7 +51,11 @@ public class ClientHandler extends Thread {
                 resolveClientRequest(Messaging.jsonParseRequest(line));
             }
             // Client sent quit or got disconnected.
-            removeClientFromServer();
+            // TODO: send only if client quits
+            if(quitFlag || !scanner.hasNextLine()){
+                removeClientFromServer();
+            }
+
 
         } catch (IOException | ParseException | ServerException | InterruptedException e) {
             logger.debug(e.getMessage());
