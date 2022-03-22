@@ -1,4 +1,4 @@
-package Messaging;
+package Utilities;
 
 import Consensus.Leader;
 import Constants.ChatServerConstants;
@@ -14,10 +14,12 @@ import org.json.simple.parser.ParseException;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -118,14 +120,21 @@ public class Messaging {
 
     public static JSONObject contactLeader(JSONObject request, Leader leader) throws ServerException, IOException, ParseException {
 
-        logger.debug("Sending request: " + request.toJSONString());
-        Socket socket = new Socket(leader.getAddress(), leader.getPort());
-        socket.setSoTimeout((int) ServerProperties.CONN_TIMEOUT);
         try {
+            logger.debug("Sending request: " + request.toJSONString());
+            Socket socket = new Socket(leader.getAddress(), leader.getPort());
+            socket.setSoTimeout((int) ServerProperties.CONN_TIMEOUT);
             String line = sendRequest(request, socket);
             socket.close();
-            return jsonParseRequest(line);
-        } catch (SocketTimeoutException e) {
+            if (line != null) {
+                return jsonParseRequest(line);
+            } else {
+                logger.debug("No response received from the leader.");
+                throw new ServerException(
+                        ChatServerConstants.ServerExceptionConstants.LEADER_FAILED_MSG,
+                        ChatServerConstants.ServerExceptionConstants.LEADER_FAILED_CODE);
+            }
+        } catch (SocketTimeoutException | ConnectException e) {
             // Throw an error if connection to leader fails.
             logger.info("Connection to leader timed out.");
             throw new ServerException(
@@ -135,16 +144,20 @@ public class Messaging {
     }
 
     private static String sendRequest(JSONObject request, Socket socket) throws IOException {
-        logger.debug("Sending request: " + request.toJSONString());
-        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-        dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-        dataOutputStream.flush();
+        try {
+            logger.debug("Sending request: " + request.toJSONString());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((request.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
 
-        InputStream inputFromClient = socket.getInputStream();
-        Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
-        String line = serverInputScanner.nextLine();
-        logger.debug("Received -: " + line);
-        return line;
+            InputStream inputFromClient = socket.getInputStream();
+            Scanner serverInputScanner = new Scanner(inputFromClient, String.valueOf(StandardCharsets.UTF_8));
+            String line = serverInputScanner.nextLine();
+            logger.debug("Received -: " + line);
+            return line;
+        } catch (NoSuchElementException | IllegalStateException e) {
+            return null;
+        }
     }
 
     private static void sendOnly(JSONObject request, Socket socket) throws IOException {

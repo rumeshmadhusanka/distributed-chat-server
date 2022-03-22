@@ -88,10 +88,16 @@ public class Main {
         // Start ClientHandler.
         while (true) {
             Socket clientSocket = serverClientSocket.accept();
-            ClientHandler clientHandler = new ClientHandler(clientSocket);
-            ServerState.getServerState().addClientHandler(clientHandler);
-            logger.debug("Starting client handler.");
-            clientHandler.start();
+            // Prevent accepting client connections when in small partitioned state.
+            if (!ServerState.getServerState().isSmallPartitionFormed()) {
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                ServerState.getServerState().addClientHandler(clientHandler);
+                logger.debug("Starting client handler.");
+                clientHandler.start();
+            } else {
+                clientSocket.getOutputStream().close();
+                clientSocket.close();
+            }
         }
     }
 }
