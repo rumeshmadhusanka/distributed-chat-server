@@ -10,11 +10,11 @@ sudo apt install openjdk-11-jdk maven -y
 
 ```bash
 mvn clean install
-java -jar target/ChatServer-1.0.0-jar-with-dependencies.jar s1 conf 
+java -jar target/ChatServer-1.0.0-jar-with-dependencies.jar s1 config 
 ```
 
 ## Run with Remote Debugging activated
 
 ```bash
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001 -jar target/ChatServer-1.0.0-jar-with-dependencies.jar s1 config
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8001 -jar target/ChatServer-1.0.0-jar-with-dependencies.jar s1 config
 ```
